@@ -25,13 +25,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final AppUserDetailsService appUserDetailsService;
     private final JwtUtil jwtUtil;
 
-    private static final List<String> WHITELISTS_URLs = List.of("/api/v1/users/register", "/api/v1/users/login", "/send-reset-otp", "/reset-password", "/logout", "/error");
+    private static final List<String> WHITELISTS_URLs = List.of(
+            "/api/v1/users/register", 
+            "/api/v1/users/login", 
+            "/api/v1/users/is-authenticated",
+            "/api/v1/users/logout",
+            "/api/v1/foods/**", 
+            "/contact-us",
+            "/send-reset-otp", 
+            "/reset-password", 
+            "/logout", 
+            "/error"
+    );
+
+    private boolean isPathWhitelisted(String servletPath) {
+        if (WHITELISTS_URLs.contains(servletPath)) {
+            return true;
+        }
+
+        for (String pattern : WHITELISTS_URLs) {
+            if (pattern.endsWith("/**")) {
+                String prefix = pattern.substring(0, pattern.length() - 3);
+                if (servletPath.startsWith(prefix)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException, java.io.IOException {
         String servletPath = request.getServletPath();
 
-        if (WHITELISTS_URLs.contains(servletPath)) {
+        if (WHITELISTS_URLs.contains(servletPath) || isPathWhitelisted(servletPath)) {
             filterChain.doFilter(request, response);
             return;
         }

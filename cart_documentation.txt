@@ -1,0 +1,257 @@
+# ZaikaBox Cart API Documentation
+
+This document provides comprehensive information about the Cart API for the ZaikaBox application. It is intended for frontend developers who need to integrate with the cart functionality.
+
+## Overview
+
+The Cart API allows users to:
+- Retrieve their current cart
+- Add items to their cart
+- Update their cart
+- Remove items from their cart
+- Clear their cart
+
+All cart operations require authentication. The API uses JWT tokens for authentication.
+
+## API Endpoints
+
+### 1. Get Cart
+
+**Endpoint:** `GET /api/v1/carts`
+
+**Description:** Retrieves the current user's cart. If the user doesn't have a cart yet, an empty cart is returned.
+
+**Authentication:** Required
+
+**Response Format:**
+```json
+{
+  "id": "string",
+  "userId": "string",
+  "items": {
+    "foodId1": quantity1,
+    "foodId2": quantity2,
+    ...
+  }
+}
+```
+
+**Example Response:**
+```json
+{
+  "id": "cart123",
+  "userId": "user123",
+  "items": {
+    "food123": 2,
+    "food456": 1
+  }
+}
+```
+
+### 2. Add Item to Cart
+
+**Endpoint:** `POST /api/v1/carts/items/{foodId}`
+
+**Description:** Adds a food item to the user's cart. If the item already exists in the cart, its quantity is incremented by 1.
+
+**Authentication:** Required
+
+**Path Parameters:**
+- `foodId` (string): The ID of the food item to add to the cart
+
+**Response Format:** Same as Get Cart
+
+**Example Response:**
+```json
+{
+  "id": "cart123",
+  "userId": "user123",
+  "items": {
+    "food123": 3,
+    "food456": 1
+  }
+}
+```
+
+### 3. Update Cart
+
+**Endpoint:** `PUT /api/v1/carts`
+
+**Description:** Updates the user's cart with the provided items. This replaces the entire cart contents.
+
+**Authentication:** Required
+
+**Request Format:**
+```json
+{
+  "userId": "string",
+  "items": {
+    "foodId1": quantity1,
+    "foodId2": quantity2,
+    ...
+  }
+}
+```
+
+**Example Request:**
+```json
+{
+  "userId": "user123",
+  "items": {
+    "food123": 2,
+    "food789": 3
+  }
+}
+```
+
+**Response Format:** Same as Get Cart
+
+**Example Response:**
+```json
+{
+  "id": "cart123",
+  "userId": "user123",
+  "items": {
+    "food123": 2,
+    "food789": 3
+  }
+}
+```
+
+### 4. Remove Item from Cart
+
+**Endpoint:** `DELETE /api/v1/carts/items/{foodId}`
+
+**Description:** Removes a food item from the user's cart.
+
+**Authentication:** Required
+
+**Path Parameters:**
+- `foodId` (string): The ID of the food item to remove from the cart
+
+**Response Format:** Same as Get Cart
+
+**Example Response:**
+```json
+{
+  "id": "cart123",
+  "userId": "user123",
+  "items": {
+    "food456": 1
+  }
+}
+```
+
+### 5. Clear Cart
+
+**Endpoint:** `DELETE /api/v1/carts`
+
+**Description:** Clears all items from the user's cart.
+
+**Authentication:** Required
+
+**Response Format:** Same as Get Cart, but with empty items
+
+**Example Response:**
+```json
+{
+  "id": "cart123",
+  "userId": "user123",
+  "items": {}
+}
+```
+
+## Data Models
+
+### CartRequest
+
+```json
+{
+  "userId": "string",
+  "items": {
+    "foodId1": quantity1,
+    "foodId2": quantity2,
+    ...
+  }
+}
+```
+
+### CartResponse
+
+```json
+{
+  "id": "string",
+  "userId": "string",
+  "items": {
+    "foodId1": quantity1,
+    "foodId2": quantity2,
+    ...
+  }
+}
+```
+
+## Error Handling
+
+The API returns standard HTTP status codes:
+
+- 200 OK: The request was successful
+- 201 Created: A new resource was created
+- 400 Bad Request: The request was invalid
+- 401 Unauthorized: Authentication is required
+- 403 Forbidden: The user doesn't have permission
+- 404 Not Found: The resource was not found
+- 500 Internal Server Error: An error occurred on the server
+
+## Authentication
+
+All cart endpoints require authentication. The frontend should include a valid JWT token in the Authorization header:
+
+```
+Authorization: Bearer <jwt_token>
+```
+
+## Implementation Notes
+
+1. The cart is associated with the authenticated user, so there's no need to specify the user ID in most requests.
+2. When adding an item to the cart, the quantity is automatically incremented by 1.
+3. When updating the cart, the entire cart contents are replaced with the new items.
+4. The cart data is stored in MongoDB in the "carts" collection.
+5. The cart items are stored as a map of food item IDs to quantities.
+
+## Example Usage Scenarios
+
+### Scenario 1: User adds items to cart
+
+1. User browses food items
+2. User clicks "Add to Cart" on a food item
+3. Frontend sends POST request to `/api/v1/carts/items/{foodId}`
+4. Backend adds the item to the cart and returns the updated cart
+5. Frontend updates the cart display
+
+### Scenario 2: User views cart
+
+1. User clicks on cart icon
+2. Frontend sends GET request to `/api/v1/carts`
+3. Backend returns the user's cart
+4. Frontend displays the cart contents
+
+### Scenario 3: User updates item quantity
+
+1. User changes the quantity of an item in the cart
+2. Frontend sends PUT request to `/api/v1/carts` with the updated cart
+3. Backend updates the cart and returns the updated cart
+4. Frontend updates the cart display
+
+### Scenario 4: User removes item from cart
+
+1. User clicks "Remove" on a cart item
+2. Frontend sends DELETE request to `/api/v1/carts/items/{foodId}`
+3. Backend removes the item from the cart and returns the updated cart
+4. Frontend updates the cart display
+
+### Scenario 5: User clears cart
+
+1. User clicks "Clear Cart"
+2. Frontend sends DELETE request to `/api/v1/carts`
+3. Backend clears the cart and returns the empty cart
+4. Frontend updates the cart display

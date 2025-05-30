@@ -1,4 +1,4 @@
-package tech.realworks.yusuf.zaikabox.controller;
+package tech.realworks.yusuf.zaikabox.io;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

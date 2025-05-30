@@ -37,7 +37,19 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(
                         auth -> auth
-                                .requestMatchers("/api/v1/users/register", "/api/v1/users/login", "/api/v1/foods/**", "/contact-us").permitAll().anyRequest().authenticated()
+                                .requestMatchers(
+                                        "/api/v1/users/register", 
+                                        "/api/v1/users/login",
+                                        "/api/v1/users/is-authenticated",
+                                        "/api/v1/users/logout",
+                                        "/api/v1/foods/**",
+                                        "/contact-us",
+                                        "/send-reset-otp", 
+                                        "/reset-password", 
+                                        "/logout", 
+                                        "/error"
+                                ).permitAll()
+                                .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -58,7 +70,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:5174", "http://localhost:5173"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cookie"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

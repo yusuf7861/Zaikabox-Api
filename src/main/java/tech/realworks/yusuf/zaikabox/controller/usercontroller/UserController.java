@@ -8,9 +8,12 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import tech.realworks.yusuf.zaikabox.controller.ErrorsResponse;
+import tech.realworks.yusuf.zaikabox.io.ErrorsResponse;
 import tech.realworks.yusuf.zaikabox.io.user.AuthenticationRequest;
 import tech.realworks.yusuf.zaikabox.io.user.AuthenticationResponse;
 import tech.realworks.yusuf.zaikabox.io.user.UserRequest;
@@ -21,6 +24,8 @@ import tech.realworks.yusuf.zaikabox.service.userService.UserService;
 import tech.realworks.yusuf.zaikabox.util.JwtUtil;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -40,7 +45,7 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ErrorsResponse("Email already exists", HttpStatus.BAD_REQUEST));
             } else {
-                return ResponseEntity.ok(userService.registerUser(userRequest));
+                return ResponseEntity.status(HttpStatus.CREATED).body(userService.registerUser(userRequest));
             }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorsResponse(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR));
@@ -63,6 +68,62 @@ public class UserController {
 
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(new AuthenticationResponse(authRequest.getEmail(), token));
+    }
 
+    @GetMapping("/profile")
+    public ResponseEntity<UserResponse> getUserProfile() {
+        UserResponse userProfile = userService.getUserProfile();
+        return ResponseEntity.ok(userProfile);
+    }
+
+    @GetMapping("/is-authenticated")
+    public ResponseEntity<?> isAuthenticated() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAuthenticated = authentication != null && authentication.isAuthenticated() && 
+                                 !authentication.getPrincipal().equals("anonymousUser");
+
+        HashMap<String, Object> response = new HashMap<>();
+        response.put("isAuthenticated", isAuthenticated);
+
+        if (isAuthenticated) {
+            response.put("username", authentication.getName());
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        // Clear the authentication from the security context
+        SecurityContextHolder.clearContext();
+
+        // Create a cookie with the same name but with max age 0 to delete it
+        ResponseCookie cookie = ResponseCookie.from("jwt", "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(0) // Expire immediately
+                .sameSite("none")
+                .build();
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Logged out successfully");
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(response);
+    }
+
+    @DeleteMapping
+    public ResponseEntity<?> deleteUser() {
+        try {
+            userService.deleteUser();
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "User deleted successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorsResponse(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR));
+        }
     }
 }
