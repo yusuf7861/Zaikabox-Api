@@ -335,11 +335,11 @@ public class BillingServiceImpl implements BillingService {
                 cell.setHorizontalAlignment(Element.ALIGN_CENTER);
                 table.addCell(cell);
 
-                cell = new PdfPCell(new Phrase(String.format("$%.2f", item.getUnitPrice()), normalFont));
+                cell = new PdfPCell(new Phrase(String.format("₹%.2f", item.getUnitPrice()), normalFont));
                 cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
                 table.addCell(cell);
 
-                cell = new PdfPCell(new Phrase(String.format("$%.2f", item.getTotal()), normalFont));
+                cell = new PdfPCell(new Phrase(String.format("₹%.2f", item.getTotal()), normalFont));
                 cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
                 table.addCell(cell);
             }
@@ -358,7 +358,7 @@ public class BillingServiceImpl implements BillingService {
             cell.setBorder(Rectangle.NO_BORDER);
             totalsTable.addCell(cell);
 
-            cell = new PdfPCell(new Phrase(String.format("$%.2f", order.getSubTotal()), normalFont));
+            cell = new PdfPCell(new Phrase(String.format("₹%.2f", order.getSubTotal()), normalFont));
             cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
             cell.setBorder(Rectangle.NO_BORDER);
             totalsTable.addCell(cell);
@@ -368,7 +368,7 @@ public class BillingServiceImpl implements BillingService {
             cell.setBorder(Rectangle.NO_BORDER);
             totalsTable.addCell(cell);
 
-            cell = new PdfPCell(new Phrase(String.format("$%.2f", order.getGstAmount()), normalFont));
+            cell = new PdfPCell(new Phrase(String.format("₹%.2f", order.getGstAmount()), normalFont));
             cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
             cell.setBorder(Rectangle.NO_BORDER);
             totalsTable.addCell(cell);
@@ -378,7 +378,7 @@ public class BillingServiceImpl implements BillingService {
             cell.setBorder(Rectangle.NO_BORDER);
             totalsTable.addCell(cell);
 
-            cell = new PdfPCell(new Phrase(String.format("$%.2f", order.getTotalAmountWithGST()), boldFont));
+            cell = new PdfPCell(new Phrase(String.format("₹%.2f", order.getTotalAmountWithGST()), boldFont));
             cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
             cell.setBorder(Rectangle.NO_BORDER);
             totalsTable.addCell(cell);
@@ -428,7 +428,7 @@ public class BillingServiceImpl implements BillingService {
         List<OrderItemEntity> items = order.getItems();
         for (int i = 0; i < items.size(); i++) {
             OrderItemEntity item = items.get(i);
-            textBill.append(String.format("%-5d %-30s %-8d $%-11.2f $%-11.2f\n", 
+            textBill.append(String.format("%-5d %-30s %-8d ₹%-11.2f ₹%-11.2f\n",
                     i + 1, 
                     truncateString(item.getName(), 30), 
                     item.getQuantity(), 
@@ -439,9 +439,9 @@ public class BillingServiceImpl implements BillingService {
         textBill.append("-------------------------------------------------------------------\n\n");
 
         // Add totals
-        textBill.append(String.format("%-47s $%.2f\n", "Subtotal:", order.getSubTotal()));
-        textBill.append(String.format("%-47s $%.2f\n", "GST (" + order.getGstRate() + "%):", order.getGstAmount()));
-        textBill.append(String.format("%-47s $%.2f\n\n", "Total:", order.getTotalAmountWithGST()));
+        textBill.append(String.format("%-47s ₹%.2f\n", "Subtotal:", order.getSubTotal()));
+        textBill.append(String.format("%-47s ₹%.2f\n", "GST (" + order.getGstRate() + "%):", order.getGstAmount()));
+        textBill.append(String.format("%-47s ₹%.2f\n\n", "Total:", order.getTotalAmountWithGST()));
 
         // Add footer
         textBill.append("===========================================\n");

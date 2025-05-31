@@ -1,0 +1,276 @@
+# Admin Endpoints Documentation
+
+This document provides information about all the endpoints that an admin would interact with in the Zaikabox API, including request and response bodies.
+
+## Food Management Endpoints
+
+### 1. Add a New Food Item
+**Endpoint:** POST /api/v1/foods
+**Description:** Adds a new food item to the system.
+
+**Request:**
+- Content-Type: multipart/form-data
+- Parts:
+  - food: JSON string with the following structure:
+    ```json
+    {
+      "name": "Food Name",
+      "description": "Food Description",
+      "price": 10.99,
+      "category": "Category Name"
+    }
+    ```
+  - file: Image file for the food item
+
+**Response:**
+- Status: 201 Created
+- Body:
+    ```json
+    {
+      "id": "generated-food-id",
+      "name": "Food Name",
+      "description": "Food Description",
+      "price": 10.99,
+      "category": "Category Name",
+      "imageUrl": "url-to-uploaded-image"
+    }
+    ```
+
+### 2. Get All Food Items
+**Endpoint:** GET /api/v1/foods
+**Description:** Retrieves all food items in the system.
+
+**Request:**
+- No request body required
+
+**Response:**
+- Status: 200 OK
+- Body: Array of food items
+    ```json
+    [
+      {
+        "id": "food-id-1",
+        "name": "Food Name 1",
+        "description": "Food Description 1",
+        "price": 10.99,
+        "category": "Category 1",
+        "imageUrl": "url-to-image-1"
+      },
+      {
+        "id": "food-id-2",
+        "name": "Food Name 2",
+        "description": "Food Description 2",
+        "price": 12.99,
+        "category": "Category 2",
+        "imageUrl": "url-to-image-2"
+      }
+    ]
+    ```
+
+### 3. Get a Specific Food Item
+**Endpoint:** GET /api/v1/foods/{id}
+**Description:** Retrieves a specific food item by its ID.
+
+**Request:**
+- Path Parameter: id - The ID of the food item
+- No request body required
+
+**Response:**
+- Status: 200 OK
+- Body:
+    ```json
+    {
+      "id": "requested-food-id",
+      "name": "Food Name",
+      "description": "Food Description",
+      "price": 10.99,
+      "category": "Category Name",
+      "imageUrl": "url-to-image"
+    }
+    ```
+
+### 4. Delete a Food Item
+**Endpoint:** DELETE /api/v1/foods/{id}
+**Description:** Deletes a specific food item by its ID.
+
+**Request:**
+- Path Parameter: id - The ID of the food item to delete
+- No request body required
+
+**Response:**
+- Status: 204 No Content
+- No response body
+
+## Order Management Endpoints
+
+### 1. Get All Orders
+**Endpoint:** GET /api/v1/orders
+**Description:** Retrieves all orders in the system.
+
+**Request:**
+- No request body required
+
+**Response:**
+- Status: 200 OK
+- Body: Array of order items
+    ```json
+    [
+      {
+        "id": "order-id-1",
+        "userId": "user-id-1",
+        "items": [
+          {
+            "id": "order-item-id-1",
+            "foodId": "food-id-1",
+            "name": "Food Name 1",
+            "price": 10.99,
+            "quantity": 2
+          }
+        ],
+        "totalAmount": 21.98,
+        "status": "PENDING",
+        "paymentMode": "CARD",
+        "createdAt": "2023-07-01T12:00:00Z"
+      },
+      {
+        "id": "order-id-2",
+        "userId": "user-id-2",
+        "items": [
+          {
+            "id": "order-item-id-2",
+            "foodId": "food-id-2",
+            "name": "Food Name 2",
+            "price": 12.99,
+            "quantity": 1
+          }
+        ],
+        "totalAmount": 12.99,
+        "status": "DELIVERED",
+        "paymentMode": "UPI",
+        "createdAt": "2023-07-02T14:30:00Z"
+      }
+    ]
+    ```
+
+### 2. Get Orders by Status
+**Endpoint:** GET /api/v1/orders/status/{status}
+**Description:** Retrieves all orders with a specific status.
+
+**Request:**
+- Path Parameter: status - The status of the orders to retrieve (e.g., PENDING, DELIVERED)
+- No request body required
+
+**Response:**
+- Status: 200 OK
+- Body: Array of order items with the specified status
+    ```json
+    [
+      {
+        "id": "order-id-1",
+        "userId": "user-id-1",
+        "items": [
+          {
+            "id": "order-item-id-1",
+            "foodId": "food-id-1",
+            "name": "Food Name 1",
+            "price": 10.99,
+            "quantity": 2
+          }
+        ],
+        "totalAmount": 21.98,
+        "status": "PENDING",
+        "paymentMode": "CARD",
+        "createdAt": "2023-07-01T12:00:00Z"
+      }
+    ]
+    ```
+
+### 3. Get a Specific Order
+**Endpoint:** GET /api/v1/orders/{orderId}
+**Description:** Retrieves a specific order by its ID.
+
+**Request:**
+- Path Parameter: orderId - The ID of the order
+- No request body required
+
+**Response:**
+- Status: 200 OK
+- Body:
+    ```json
+    {
+      "id": "requested-order-id",
+      "userId": "user-id",
+      "items": [
+        {
+          "id": "order-item-id",
+          "foodId": "food-id",
+          "name": "Food Name",
+          "price": 10.99,
+          "quantity": 2
+        }
+      ],
+      "totalAmount": 21.98,
+      "status": "PENDING",
+      "paymentMode": "CARD",
+      "createdAt": "2023-07-01T12:00:00Z"
+    }
+    ```
+
+## User Management
+
+### 1. Register a New User
+**Endpoint:** POST /api/v1/users/register
+**Description:** Registers a new user in the system.
+
+**Request:**
+- Content-Type: application/json
+- Body:
+    ```json
+    {
+      "name": "User Name",
+      "email": "user@example.com",
+      "password": "Password123!"
+    }
+    ```
+
+**Response:**
+- Status: 201 Created
+- Body:
+    ```json
+    {
+      "id": "generated-user-id",
+      "name": "User Name",
+      "email": "user@example.com"
+    }
+    ```
+
+### 2. Get User Profile
+**Endpoint:** GET /api/v1/users/profile
+**Description:** Retrieves the profile of the currently authenticated user.
+
+**Request:**
+- Authorization: Bearer {jwt-token}
+- No request body required
+
+**Response:**
+- Status: 200 OK
+- Body:
+    ```json
+    {
+      "id": "user-id",
+      "name": "User Name",
+      "email": "user@example.com"
+    }
+    ```
+
+## Notes for Admin Frontend Development
+
+1. **Authentication**: All admin endpoints require authentication. Make sure to include the JWT token in the Authorization header for all requests except login and register.
+
+2. **Food Management**: The admin can add, view, and delete food items. When adding a food item, use multipart/form-data to upload both the food details and the image.
+
+3. **Order Management**: The admin can view all orders and filter them by status.
+
+4. **User Management**: Currently, there is no specific endpoint for adding admin users or managing user roles. The system does not have explicit role-based access control.
+
+5. **Error Handling**: All endpoints return appropriate HTTP status codes and error messages in case of failures.

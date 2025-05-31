@@ -1,12 +1,9 @@
 package tech.realworks.yusuf.zaikabox.service.userService;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import tech.realworks.yusuf.zaikabox.entity.UserEntity;
 import tech.realworks.yusuf.zaikabox.io.user.UserRequest;
 import tech.realworks.yusuf.zaikabox.io.user.UserResponse;
