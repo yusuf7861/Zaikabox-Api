@@ -6,10 +6,7 @@ import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import tech.realworks.yusuf.zaikabox.entity.CartEntity;
-import tech.realworks.yusuf.zaikabox.entity.FoodEntity;
-import tech.realworks.yusuf.zaikabox.entity.OrderEntity;
-import tech.realworks.yusuf.zaikabox.entity.OrderItemEntity;
+import tech.realworks.yusuf.zaikabox.entity.*;
 import tech.realworks.yusuf.zaikabox.io.OrderItemRequest;
 import tech.realworks.yusuf.zaikabox.io.OrderItemResponse;
 import tech.realworks.yusuf.zaikabox.io.OrderRequest;
@@ -71,7 +68,7 @@ public class BillingServiceImpl implements BillingService {
                 .totalAmountWithGST(totalAmountWithGST)
                 .paymentMode(orderRequest.getPaymentMode())
                 .orderDate(LocalDateTime.now())
-                .status("PENDING")
+                .status(Status.PENDING)
                 .build();
 
         orderEntity = orderRepository.save(orderEntity);
@@ -232,7 +229,7 @@ public class BillingServiceImpl implements BillingService {
                 .totalAmountWithGST(orderEntity.getTotalAmountWithGST())
                 .paymentMode(orderEntity.getPaymentMode())
                 .orderDate(orderEntity.getOrderDate())
-                .status(orderEntity.getStatus())
+                .status(String.valueOf(orderEntity.getStatus()))
                 .build();
     }
 
@@ -280,7 +277,7 @@ public class BillingServiceImpl implements BillingService {
             orderDetails.add(Chunk.NEWLINE);
 
             orderDetails.add(new Chunk("Status: ", boldFont));
-            orderDetails.add(new Chunk(order.getStatus(), normalFont));
+            orderDetails.add(new Chunk(order.getStatus().toString(), normalFont));
             orderDetails.add(Chunk.NEWLINE);
 
             document.add(orderDetails);

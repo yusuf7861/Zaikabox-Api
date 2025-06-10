@@ -31,5 +31,5 @@ public class OrderEntity {
     private double totalAmountWithGST; // Total amount including GST
     private String paymentMode; // Payment mode (e.g., UPI, CARD, COD)
     private LocalDateTime orderDate; // Date and time when the order was placed
-    private String status; // Order status (e.g., PENDING, CONFIRMED, DELIVERED)
+    private Status status; // Order status (e.g., PENDING, CONFIRMED, DELIVERED)
 }
