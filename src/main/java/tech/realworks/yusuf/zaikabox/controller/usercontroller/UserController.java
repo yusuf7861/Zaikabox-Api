@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -53,20 +54,24 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthenticationRequest authRequest){
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword()));
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getEmail());
+        try {
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword()));
+            final UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getEmail());
 
-        final String token = jwtUtil.generateToken(userDetails); // Pass userDetails to generate the token
-        ResponseCookie cookie = ResponseCookie.from("jwt", token)
-                .httpOnly(true)
-                .secure(true) // must be true if using sameSite=None
-                .path("/")
-                .maxAge(Duration.ofDays(1))
-                .sameSite("none") // allow cross origin cookies
-                .build();
+            final String token = jwtUtil.generateToken(userDetails); // Pass userDetails to generate the token
+            ResponseCookie cookie = ResponseCookie.from("jwt", token)
+                    .httpOnly(true)
+                    .secure(true) // must be true if using sameSite=None
+                    .path("/")
+                    .maxAge(Duration.ofDays(1))
+                    .sameSite("none") // allow cross origin cookies
+                    .build();
 
-        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(new AuthenticationResponse(authRequest.getEmail(), token));
+            return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
+                    .body(new AuthenticationResponse(authRequest.getEmail(), token));
+        } catch (AuthenticationException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorsResponse("Invalid credentials", HttpStatus.UNAUTHORIZED));
+        }
     }
 
     @GetMapping("/profile")
