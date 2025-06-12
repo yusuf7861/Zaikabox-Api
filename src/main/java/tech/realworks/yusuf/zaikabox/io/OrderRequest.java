@@ -19,4 +19,15 @@ public class OrderRequest {
     private String paymentMode; // Payment mode (e.g., UPI, CARD, COD)
     private List<OrderItemRequest> items; // List of items to order (optional, can use cart items if not provided)
     private boolean useCart; // Flag to indicate whether to use the current cart items
+
+    // Billing details
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String address;
+    private String zip;
+    private String locality;
+    private String landmark;
+    private String country;
+    private String state;
 }

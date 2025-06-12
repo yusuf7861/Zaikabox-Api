@@ -27,4 +27,15 @@ public class OrderResponse {
     private String paymentMode; // Payment mode (e.g., UPI, CARD, COD)
     private LocalDateTime orderDate; // Date and time when the order was placed
     private String status; // Order status (e.g., PENDING, CONFIRMED, DELIVERED)
+
+    // Billing details
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String address;
+    private String zip;
+    private String locality;
+    private String landmark;
+    private String country;
+    private String state;
 }

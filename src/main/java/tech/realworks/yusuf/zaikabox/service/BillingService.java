@@ -1,5 +1,6 @@
 package tech.realworks.yusuf.zaikabox.service;
 
+import tech.realworks.yusuf.zaikabox.entity.Status;
 import tech.realworks.yusuf.zaikabox.io.OrderRequest;
 import tech.realworks.yusuf.zaikabox.io.OrderResponse;
 
@@ -35,7 +36,7 @@ public interface BillingService {
      * @param status The order status
      * @return List of order responses
      */
-    List<OrderResponse> getOrdersByStatus(String status);
+    List<OrderResponse> getOrdersByStatus(Status status);
 
     /**
      * Generate a unique order ID

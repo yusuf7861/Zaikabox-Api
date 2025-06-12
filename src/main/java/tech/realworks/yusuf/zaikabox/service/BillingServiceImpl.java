@@ -69,6 +69,17 @@ public class BillingServiceImpl implements BillingService {
                 .paymentMode(orderRequest.getPaymentMode())
                 .orderDate(LocalDateTime.now())
                 .status(Status.PENDING)
+                .billingDetails(BillingDetails.builder()
+                        .firstName(orderRequest.getFirstName())
+                        .lastName(orderRequest.getLastName())
+                        .email(orderRequest.getEmail())
+                        .address(orderRequest.getAddress())
+                        .zip(orderRequest.getZip())
+                        .locality(orderRequest.getLocality())
+                        .landmark(orderRequest.getLandmark())
+                        .country(orderRequest.getCountry())
+                        .state(orderRequest.getState())
+                        .build())
                 .build();
 
         orderEntity = orderRepository.save(orderEntity);
@@ -98,7 +109,7 @@ public class BillingServiceImpl implements BillingService {
     }
 
     @Override
-    public List<OrderResponse> getOrdersByStatus(String status) {
+    public List<OrderResponse> getOrdersByStatus(Status status) {
         String customerId = userService.findByUserId();
         List<OrderEntity> orders = orderRepository.findByCustomerIdAndStatus(customerId, status);
         return orders.stream()
@@ -219,7 +230,7 @@ public class BillingServiceImpl implements BillingService {
                         .build())
                 .collect(Collectors.toList());
 
-        return OrderResponse.builder()
+        OrderResponse response = OrderResponse.builder()
                 .orderId(orderEntity.getOrderId())
                 .customerId(orderEntity.getCustomerId())
                 .items(itemResponses)
@@ -231,6 +242,22 @@ public class BillingServiceImpl implements BillingService {
                 .orderDate(orderEntity.getOrderDate())
                 .status(String.valueOf(orderEntity.getStatus()))
                 .build();
+
+        // Add billing details if available
+        if (orderEntity.getBillingDetails() != null) {
+            BillingDetails billingDetails = orderEntity.getBillingDetails();
+            response.setFirstName(billingDetails.getFirstName());
+            response.setLastName(billingDetails.getLastName());
+            response.setEmail(billingDetails.getEmail());
+            response.setAddress(billingDetails.getAddress());
+            response.setZip(billingDetails.getZip());
+            response.setLocality(billingDetails.getLocality());
+            response.setLandmark(billingDetails.getLandmark());
+            response.setCountry(billingDetails.getCountry());
+            response.setState(billingDetails.getState());
+        }
+
+        return response;
     }
 
     @Override
@@ -279,6 +306,56 @@ public class BillingServiceImpl implements BillingService {
             orderDetails.add(new Chunk("Status: ", boldFont));
             orderDetails.add(new Chunk(order.getStatus().toString(), normalFont));
             orderDetails.add(Chunk.NEWLINE);
+
+            // Add billing details if available
+            if (order.getBillingDetails() != null) {
+                BillingDetails billingDetails = order.getBillingDetails();
+                orderDetails.add(Chunk.NEWLINE);
+                orderDetails.add(new Chunk("Billing Details:", boldFont));
+                orderDetails.add(Chunk.NEWLINE);
+
+                if (billingDetails.getFirstName() != null && billingDetails.getLastName() != null) {
+                    orderDetails.add(new Chunk("Name: ", boldFont));
+                    orderDetails.add(new Chunk(billingDetails.getFirstName() + " " + billingDetails.getLastName(), normalFont));
+                    orderDetails.add(Chunk.NEWLINE);
+                }
+
+                if (billingDetails.getEmail() != null) {
+                    orderDetails.add(new Chunk("Email: ", boldFont));
+                    orderDetails.add(new Chunk(billingDetails.getEmail(), normalFont));
+                    orderDetails.add(Chunk.NEWLINE);
+                }
+
+                if (billingDetails.getAddress() != null) {
+                    orderDetails.add(new Chunk("Address: ", boldFont));
+                    orderDetails.add(new Chunk(billingDetails.getAddress(), normalFont));
+                    orderDetails.add(Chunk.NEWLINE);
+                }
+
+                if (billingDetails.getLocality() != null) {
+                    orderDetails.add(new Chunk("Locality: ", boldFont));
+                    orderDetails.add(new Chunk(billingDetails.getLocality(), normalFont));
+                    orderDetails.add(Chunk.NEWLINE);
+                }
+
+                if (billingDetails.getLandmark() != null) {
+                    orderDetails.add(new Chunk("Landmark: ", boldFont));
+                    orderDetails.add(new Chunk(billingDetails.getLandmark(), normalFont));
+                    orderDetails.add(Chunk.NEWLINE);
+                }
+
+                if (billingDetails.getZip() != null) {
+                    orderDetails.add(new Chunk("ZIP: ", boldFont));
+                    orderDetails.add(new Chunk(billingDetails.getZip(), normalFont));
+                    orderDetails.add(Chunk.NEWLINE);
+                }
+
+                if (billingDetails.getState() != null && billingDetails.getCountry() != null) {
+                    orderDetails.add(new Chunk("Location: ", boldFont));
+                    orderDetails.add(new Chunk(billingDetails.getState() + ", " + billingDetails.getCountry(), normalFont));
+                    orderDetails.add(Chunk.NEWLINE);
+                }
+            }
 
             document.add(orderDetails);
             document.add(Chunk.NEWLINE);
@@ -416,6 +493,42 @@ public class BillingServiceImpl implements BillingService {
         textBill.append("Order Date: ").append(order.getOrderDate().format(formatter)).append("\n");
         textBill.append("Payment Mode: ").append(order.getPaymentMode()).append("\n");
         textBill.append("Status: ").append(order.getStatus()).append("\n\n");
+
+        // Add billing details if available
+        if (order.getBillingDetails() != null) {
+            BillingDetails billingDetails = order.getBillingDetails();
+            textBill.append("Billing Details:\n");
+
+            if (billingDetails.getFirstName() != null && billingDetails.getLastName() != null) {
+                textBill.append("Name: ").append(billingDetails.getFirstName()).append(" ").append(billingDetails.getLastName()).append("\n");
+            }
+
+            if (billingDetails.getEmail() != null) {
+                textBill.append("Email: ").append(billingDetails.getEmail()).append("\n");
+            }
+
+            if (billingDetails.getAddress() != null) {
+                textBill.append("Address: ").append(billingDetails.getAddress()).append("\n");
+            }
+
+            if (billingDetails.getLocality() != null) {
+                textBill.append("Locality: ").append(billingDetails.getLocality()).append("\n");
+            }
+
+            if (billingDetails.getLandmark() != null) {
+                textBill.append("Landmark: ").append(billingDetails.getLandmark()).append("\n");
+            }
+
+            if (billingDetails.getZip() != null) {
+                textBill.append("ZIP: ").append(billingDetails.getZip()).append("\n");
+            }
+
+            if (billingDetails.getState() != null && billingDetails.getCountry() != null) {
+                textBill.append("Location: ").append(billingDetails.getState()).append(", ").append(billingDetails.getCountry()).append("\n");
+            }
+
+            textBill.append("\n");
+        }
 
         // Add items table header
         textBill.append(String.format("%-5s %-30s %-8s %-12s %-12s\n", "No.", "Item", "Qty", "Unit Price", "Total"));

@@ -46,9 +46,17 @@ public class SecurityConfig {
                                         "/contact-us",
                                         "/send-reset-otp", 
                                         "/reset-password", 
-                                        "/logout", 
+                                        "/logout",
+                                        "/swagger-ui.html",
                                         "/error"
                                 ).permitAll()
+                                // Admin-only endpoints
+                                .requestMatchers(
+                                        "/api/v1/admin/**",
+                                        "/api/v1/foods/add",
+                                        "/api/v1/foods/update/**",
+                                        "/api/v1/foods/delete/**"
+                                ).hasRole("ADMIN")
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -68,7 +76,7 @@ public class SecurityConfig {
 
     private UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5174", "http://localhost:5173"));
+        config.setAllowedOrigins(List.of("http://localhost:5174", "http://localhost:5173", "http://localhost:8081/", "https://zaikabox.vercel.app/"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cookie"));
         config.setAllowCredentials(true);

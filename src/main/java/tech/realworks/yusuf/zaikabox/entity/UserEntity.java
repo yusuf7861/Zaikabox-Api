@@ -32,5 +32,5 @@ public class UserEntity {
     @Size(min = 8, max = 16, message = "Password cannot be null")
     @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$")
     private String password;
-
+    private Role role;
 }

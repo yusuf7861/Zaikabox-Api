@@ -3,6 +3,7 @@ package tech.realworks.yusuf.zaikabox.repository;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 import tech.realworks.yusuf.zaikabox.entity.OrderEntity;
+import tech.realworks.yusuf.zaikabox.entity.Status;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,5 +35,5 @@ public interface OrderRepository extends MongoRepository<OrderEntity, String> {
      * @param status The order status
      * @return List of orders for the customer with the specified status
      */
-    List<OrderEntity> findByCustomerIdAndStatus(String customerId, String status);
+    List<OrderEntity> findByCustomerIdAndStatus(String customerId, Status status);
 }

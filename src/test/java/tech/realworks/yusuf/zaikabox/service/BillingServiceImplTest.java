@@ -8,6 +8,7 @@ import org.mockito.MockitoAnnotations;
 import tech.realworks.yusuf.zaikabox.entity.CartEntity;
 import tech.realworks.yusuf.zaikabox.entity.FoodEntity;
 import tech.realworks.yusuf.zaikabox.entity.OrderEntity;
+import tech.realworks.yusuf.zaikabox.entity.Status;
 import tech.realworks.yusuf.zaikabox.io.OrderItemRequest;
 import tech.realworks.yusuf.zaikabox.io.OrderRequest;
 import tech.realworks.yusuf.zaikabox.io.OrderResponse;
@@ -190,7 +191,7 @@ class BillingServiceImplTest {
     @Test
     void getOrdersByStatus() {
         // Arrange
-        String status = "PENDING";
+        Status status = Status.PENDING;
 
         OrderEntity orderEntity = mock(OrderEntity.class);
         when(orderEntity.getOrderId()).thenReturn(ORDER_ID);
@@ -228,7 +229,7 @@ class BillingServiceImplTest {
         when(orderEntity.getOrderId()).thenReturn(ORDER_ID);
         when(orderEntity.getCustomerId()).thenReturn(USER_ID);
         when(orderEntity.getPaymentMode()).thenReturn("CARD");
-        when(orderEntity.getStatus()).thenReturn("COMPLETED");
+        when(orderEntity.getStatus()).thenReturn(Status.DELIVERED);
         when(orderEntity.getSubTotal()).thenReturn(300.0);
         when(orderEntity.getGstRate()).thenReturn(5.0);
         when(orderEntity.getGstAmount()).thenReturn(15.0);

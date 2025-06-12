@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import tech.realworks.yusuf.zaikabox.entity.Role;
 import tech.realworks.yusuf.zaikabox.entity.UserEntity;
 import tech.realworks.yusuf.zaikabox.io.user.UserRequest;
 import tech.realworks.yusuf.zaikabox.io.user.UserResponse;
@@ -63,6 +64,7 @@ public class UserServiceImpl implements UserService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
+                .role(Role.CUSTOMER) // Set default role as CUSTOMER
                 .build();
     }
 
@@ -71,6 +73,7 @@ public class UserServiceImpl implements UserService {
                 .id(registeredUser.getId())
                 .name(registeredUser.getName())
                 .email(registeredUser.getEmail())
+                .role(registeredUser.getRole())
                 .build();
     }
 }

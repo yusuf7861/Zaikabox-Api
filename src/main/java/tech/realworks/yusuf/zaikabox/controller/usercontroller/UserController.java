@@ -6,6 +6,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -13,6 +14,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import tech.realworks.yusuf.zaikabox.entity.Role;
+import tech.realworks.yusuf.zaikabox.entity.UserEntity;
 import tech.realworks.yusuf.zaikabox.io.ErrorsResponse;
 import tech.realworks.yusuf.zaikabox.io.user.AuthenticationRequest;
 import tech.realworks.yusuf.zaikabox.io.user.AuthenticationResponse;
@@ -25,7 +28,9 @@ import tech.realworks.yusuf.zaikabox.util.JwtUtil;
 
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -118,6 +123,7 @@ public class UserController {
                 .body(response);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping
     public ResponseEntity<?> deleteUser() {
         try {
@@ -125,6 +131,54 @@ public class UserController {
             Map<String, String> response = new HashMap<>();
             response.put("message", "User deleted successfully");
             return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorsResponse(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR));
+        }
+    }
+
+    /**
+     * Endpoint to set a user as admin. This endpoint is restricted to admin users only.
+     * @param email The email of the user to be set as admin
+     * @return ResponseEntity with success or error message
+     */
+//    @PutMapping("/admin/set-role")
+//    public ResponseEntity<?> setUserRole(@RequestParam String email, @RequestParam Role role) {
+//        try {
+//            UserEntity user = userRepository.findByEmail(email)
+//                    .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+//
+//            user.setRole(role);
+//            userRepository.save(user);
+//
+//            Map<String, String> response = new HashMap<>();
+//            response.put("message", "User role updated successfully to " + role);
+//            return ResponseEntity.ok(response);
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body(new ErrorsResponse(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR));
+//        }
+//    }
+
+    /**
+     * Admin-only endpoint to get all users. This endpoint is restricted to admin users only.
+     * @return ResponseEntity with list of all users
+     */
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin/users")
+    public ResponseEntity<?> getAllUsers() {
+        try {
+            List<UserEntity> users = userRepository.findAll();
+            List<UserResponse> userResponses = users.stream()
+                    .map(user -> UserResponse.builder()
+                            .id(user.getId())
+                            .name(user.getName())
+                            .email(user.getEmail())
+                            .role(user.getRole())
+                            .build())
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(userResponses);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorsResponse(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR));

@@ -9,6 +9,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import tech.realworks.yusuf.zaikabox.entity.Status;
 import tech.realworks.yusuf.zaikabox.io.OrderItemRequest;
 import tech.realworks.yusuf.zaikabox.io.OrderItemResponse;
 import tech.realworks.yusuf.zaikabox.io.OrderRequest;
@@ -214,7 +215,7 @@ class BillingControllerTest {
     @Test
     void getOrdersByStatus() throws Exception {
         // Arrange
-        String status = "PENDING";
+        Status status = Status.PENDING;
 
         List<OrderItemResponse> itemResponses = Collections.singletonList(
                 OrderItemResponse.builder()
@@ -235,7 +236,7 @@ class BillingControllerTest {
                 .totalAmountWithGST(231.00)
                 .paymentMode("UPI")
                 .orderDate(LocalDateTime.now())
-                .status(status)
+                .status(String.valueOf(status))
                 .build();
 
         when(billingService.getOrdersByStatus(status)).thenReturn(Collections.singletonList(orderResponse));

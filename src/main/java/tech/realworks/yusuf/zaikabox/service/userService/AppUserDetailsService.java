@@ -6,10 +6,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import tech.realworks.yusuf.zaikabox.entity.Role;
 import tech.realworks.yusuf.zaikabox.entity.UserEntity;
 import tech.realworks.yusuf.zaikabox.repository.userRepo.UserRepository;
-
-import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +19,10 @@ public class AppUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         UserEntity user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User with email " + email + " not found"));
-        return new User(user.getEmail(), user.getPassword(), Collections.emptyList());
+
+        // If role is null, default to CUSTOMER role
+        Role role = user.getRole() != null ? user.getRole() : Role.CUSTOMER;
+
+        return new User(user.getEmail(), user.getPassword(), role.getAuthorities());
     }
 }
