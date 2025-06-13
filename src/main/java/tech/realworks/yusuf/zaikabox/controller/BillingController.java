@@ -5,11 +5,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import tech.realworks.yusuf.zaikabox.entity.Status;
+import tech.realworks.yusuf.zaikabox.io.ErrorsResponse;
 import tech.realworks.yusuf.zaikabox.io.OrderRequest;
 import tech.realworks.yusuf.zaikabox.io.OrderResponse;
 import tech.realworks.yusuf.zaikabox.service.BillingService;
+import tech.realworks.yusuf.zaikabox.service.OrderService;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -23,6 +26,7 @@ import java.util.List;
 public class BillingController {
 
     private final BillingService billingService;
+    private final OrderService orderService;
 
     /**
      * Create a new order
@@ -96,5 +100,22 @@ public class BillingController {
         headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
 
         return new ResponseEntity<>(textBytes, headers, HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{orderId}")
+    public ResponseEntity<?> deleteOrder(@PathVariable String orderId) {
+        try {
+            orderService.deleteOrder(orderId);
+            return ResponseEntity.ok("Order deleted successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.internalServerError().body(new ErrorsResponse(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR));
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{orderId}")
+    public void updateOrderStatus(@PathVariable String orderId, Status status) {
+        orderService.changeStatusOfOrder(orderId, status);
     }
 }

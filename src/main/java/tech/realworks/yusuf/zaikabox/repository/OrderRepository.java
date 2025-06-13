@@ -36,4 +36,6 @@ public interface OrderRepository extends MongoRepository<OrderEntity, String> {
      * @return List of orders for the customer with the specified status
      */
     List<OrderEntity> findByCustomerIdAndStatus(String customerId, Status status);
+
+    void deleteByOrderId(String orderId);
 }

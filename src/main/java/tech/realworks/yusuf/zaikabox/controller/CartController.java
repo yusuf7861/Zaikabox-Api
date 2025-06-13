@@ -18,10 +18,6 @@ public class CartController {
 
     private final CartService cartService;
 
-    /**
-     * Get the current user's cart
-     * @return ResponseEntity containing the cart response
-     */
     @GetMapping
     public ResponseEntity<CartResponse> getCart() {
         return ResponseEntity.ok(cartService.getCart());

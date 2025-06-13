@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -23,6 +24,7 @@ public class FoodController {
 
     private final FoodService foodService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public FoodResponse addFood(@RequestPart("food") String foodString, @RequestPart("file") MultipartFile file) {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -48,6 +50,7 @@ public class FoodController {
         return ResponseEntity.ok(foodResponse);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping({"/{id}"})
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteFood(@PathVariable("id") String id) {

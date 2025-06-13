@@ -69,17 +69,7 @@ public class BillingServiceImpl implements BillingService {
                 .paymentMode(orderRequest.getPaymentMode())
                 .orderDate(LocalDateTime.now())
                 .status(Status.PENDING)
-                .billingDetails(BillingDetails.builder()
-                        .firstName(orderRequest.getFirstName())
-                        .lastName(orderRequest.getLastName())
-                        .email(orderRequest.getEmail())
-                        .address(orderRequest.getAddress())
-                        .zip(orderRequest.getZip())
-                        .locality(orderRequest.getLocality())
-                        .landmark(orderRequest.getLandmark())
-                        .country(orderRequest.getCountry())
-                        .state(orderRequest.getState())
-                        .build())
+                .billingDetails((orderRequest.getBillingDetails()))
                 .build();
 
         orderEntity = orderRepository.save(orderEntity);
