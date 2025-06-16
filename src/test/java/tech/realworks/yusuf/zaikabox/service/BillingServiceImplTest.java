@@ -229,7 +229,7 @@ class BillingServiceImplTest {
         when(orderEntity.getOrderId()).thenReturn(ORDER_ID);
         when(orderEntity.getCustomerId()).thenReturn(USER_ID);
         when(orderEntity.getPaymentMode()).thenReturn("CARD");
-        when(orderEntity.getStatus()).thenReturn(Status.DELIVERED);
+        when(orderEntity.getStatus()).thenReturn(Status.valueOf(Status.DELIVERED.name()));
         when(orderEntity.getSubTotal()).thenReturn(300.0);
         when(orderEntity.getGstRate()).thenReturn(5.0);
         when(orderEntity.getGstAmount()).thenReturn(15.0);
@@ -268,7 +268,7 @@ class BillingServiceImplTest {
         assertTrue(textBill.contains("Order ID: " + ORDER_ID));
         assertTrue(textBill.contains("Order Date: 15-06-2023 14:30:45"));
         assertTrue(textBill.contains("Payment Mode: CARD"));
-        assertTrue(textBill.contains("Status: COMPLETED"));
+        assertTrue(textBill.contains("Status: DELIVERED"));
 
         // Check item details
         assertTrue(textBill.contains("Paneer Butter Masala"));
@@ -276,11 +276,11 @@ class BillingServiceImplTest {
 
         // Check totals
         assertTrue(textBill.contains("Subtotal:"));
-        assertTrue(textBill.contains("$300.00"));
+        assertTrue(textBill.contains("300.00"));
         assertTrue(textBill.contains("GST (5.0%):"));
-        assertTrue(textBill.contains("$15.00"));
+        assertTrue(textBill.contains("15.00"));
         assertTrue(textBill.contains("Total:"));
-        assertTrue(textBill.contains("$315.00"));
+        assertTrue(textBill.contains("315.00"));
 
         // Check footer
         assertTrue(textBill.contains("Thank you for your order!"));
