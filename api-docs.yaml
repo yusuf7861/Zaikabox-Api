@@ -1,78 +1,137 @@
 openapi: 3.1.0
 info:
-  title: ZaikaBox - Food Delivery Application
-  version: v0
+  title: Zaikabox API
+  description: API documentation for Zaikabox
+  version: 1.0.0
 servers:
-  - url: http://localhost:8080
-    description: Generated server url
+- url: http://localhost:8080
+  description: Generated server url
 paths:
-  /api/v1/carts:
+  /api/v1/orders/{orderId}:
     get:
       tags:
-        - cart-controller
-      operationId: getCart
+      - billing-controller
+      operationId: getOrder
+      parameters:
+      - name: orderId
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/CartResponse'
+                $ref: "#/components/schemas/OrderResponse"
     put:
       tags:
-        - cart-controller
+      - billing-controller
+      operationId: updateOrderStatus
+      parameters:
+      - name: orderId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: status
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - PENDING
+          - DELIVERED
+          - PROCESSING
+          - CANCELLED
+      responses:
+        "200":
+          description: OK
+    delete:
+      tags:
+      - billing-controller
+      operationId: deleteOrder
+      parameters:
+      - name: orderId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /api/v1/carts:
+    get:
+      tags:
+      - cart-controller
+      operationId: getCart
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CartResponse"
+    put:
+      tags:
+      - cart-controller
       operationId: updateCart
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CartRequest'
+              $ref: "#/components/schemas/CartRequest"
         required: true
       responses:
-        '200':
+        "200":
           description: OK
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/CartResponse'
+                $ref: "#/components/schemas/CartResponse"
     delete:
       tags:
-        - cart-controller
+      - cart-controller
       operationId: clearCart
       responses:
-        '200':
+        "200":
           description: OK
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/CartResponse'
+                $ref: "#/components/schemas/CartResponse"
   /contact-us:
     post:
       tags:
-        - contact-us-controller
+      - contact-us-controller
       operationId: setContactUsEmailService
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ContactUsRequest'
+              $ref: "#/components/schemas/ContactUsRequest"
         required: true
       responses:
-        '200':
+        "200":
           description: OK
   /api/v1/users/register:
     post:
       tags:
-        - user-controller
+      - user-controller
       operationId: register
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserRequest'
+              $ref: "#/components/schemas/UserRequest"
         required: true
       responses:
-        '200':
+        "200":
           description: OK
           content:
             '*/*':
@@ -81,10 +140,10 @@ paths:
   /api/v1/users/logout:
     post:
       tags:
-        - user-controller
+      - user-controller
       operationId: logout
       responses:
-        '200':
+        "200":
           description: OK
           content:
             '*/*':
@@ -93,16 +152,16 @@ paths:
   /api/v1/users/login:
     post:
       tags:
-        - user-controller
+      - user-controller
       operationId: login
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthenticationRequest'
+              $ref: "#/components/schemas/AuthenticationRequest"
         required: true
       responses:
-        '200':
+        "200":
           description: OK
           content:
             '*/*':
@@ -111,51 +170,51 @@ paths:
   /api/v1/orders:
     get:
       tags:
-        - billing-controller
+      - billing-controller
       operationId: getOrders
       responses:
-        '200':
+        "200":
           description: OK
           content:
             '*/*':
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/OrderResponse'
+                  $ref: "#/components/schemas/OrderResponse"
     post:
       tags:
-        - billing-controller
+      - billing-controller
       operationId: createOrder
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderRequest'
+              $ref: "#/components/schemas/OrderRequest"
         required: true
       responses:
-        '200':
+        "200":
           description: OK
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/OrderResponse'
+                $ref: "#/components/schemas/OrderResponse"
   /api/v1/foods:
     get:
       tags:
-        - food-controller
+      - food-controller
       operationId: readFoods
       responses:
-        '200':
+        "200":
           description: OK
           content:
             '*/*':
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/FoodResponse'
+                  $ref: "#/components/schemas/FoodResponse"
     post:
       tags:
-        - food-controller
+      - food-controller
       operationId: addFood
       requestBody:
         content:
@@ -169,69 +228,69 @@ paths:
                   type: string
                   format: binary
               required:
-                - file
-                - food
+              - file
+              - food
       responses:
-        '200':
+        "200":
           description: OK
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/FoodResponse'
+                $ref: "#/components/schemas/FoodResponse"
   /api/v1/carts/items/{foodId}:
     post:
       tags:
-        - cart-controller
+      - cart-controller
       operationId: addToCart
       parameters:
-        - name: foodId
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: foodId
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/CartResponse'
+                $ref: "#/components/schemas/CartResponse"
     delete:
       tags:
-        - cart-controller
+      - cart-controller
       operationId: removeFromCart
       parameters:
-        - name: foodId
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: foodId
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/CartResponse'
+                $ref: "#/components/schemas/CartResponse"
   /api/v1/users/profile:
     get:
       tags:
-        - user-controller
+      - user-controller
       operationId: getUserProfile
       responses:
-        '200':
+        "200":
           description: OK
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/UserResponse'
+                $ref: "#/components/schemas/UserResponse"
   /api/v1/users/is-authenticated:
     get:
       tags:
-        - user-controller
+      - user-controller
       operationId: isAuthenticated
       responses:
-        '200':
+        "200":
           description: OK
           content:
             '*/*':
@@ -240,46 +299,28 @@ paths:
   /api/v1/users/admin/users:
     get:
       tags:
-        - user-controller
+      - user-controller
       operationId: getAllUsers
       responses:
-        '200':
+        "200":
           description: OK
           content:
             '*/*':
               schema:
                 type: object
-  /api/v1/orders/{orderId}:
-    get:
-      tags:
-        - billing-controller
-      operationId: getOrder
-      parameters:
-        - name: orderId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/OrderResponse'
   /api/v1/orders/{orderId}/bill/text:
     get:
       tags:
-        - billing-controller
+      - billing-controller
       operationId: generateTextBill
       parameters:
-        - name: orderId
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: orderId
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             '*/*':
@@ -289,16 +330,16 @@ paths:
   /api/v1/orders/{orderId}/bill/pdf:
     get:
       tags:
-        - billing-controller
+      - billing-controller
       operationId: generatePdfBill
       parameters:
-        - name: orderId
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: orderId
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             '*/*':
@@ -308,66 +349,66 @@ paths:
   /api/v1/orders/status/{status}:
     get:
       tags:
-        - billing-controller
+      - billing-controller
       operationId: getOrdersByStatus
       parameters:
-        - name: status
-          in: path
-          required: true
-          schema:
-            type: string
-            enum:
-              - PENDING
-              - DELIVERED
-              - PROCESSING
-              - CANCELLED
+      - name: status
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - PENDING
+          - DELIVERED
+          - PROCESSING
+          - CANCELLED
       responses:
-        '200':
+        "200":
           description: OK
           content:
             '*/*':
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/OrderResponse'
+                  $ref: "#/components/schemas/OrderResponse"
   /api/v1/foods/{id}:
     get:
       tags:
-        - food-controller
+      - food-controller
       operationId: readFood
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/FoodResponse'
+                $ref: "#/components/schemas/FoodResponse"
     delete:
       tags:
-        - food-controller
+      - food-controller
       operationId: deleteFood
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
-        '204':
+        "204":
           description: No Content
   /api/v1/users:
     delete:
       tags:
-        - user-controller
+      - user-controller
       operationId: deleteUser
       responses:
-        '200':
+        "200":
           description: OK
           content:
             '*/*':
@@ -426,6 +467,29 @@ components:
           type: string
         password:
           type: string
+    BillingDetails:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phoneNumber:
+          type: string
+        address:
+          type: string
+        zip:
+          type: string
+        locality:
+          type: string
+        landmark:
+          type: string
+        country:
+          type: string
+        state:
+          type: string
     OrderItemRequest:
       type: object
       properties:
@@ -442,27 +506,11 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/OrderItemRequest'
+            $ref: "#/components/schemas/OrderItemRequest"
         useCart:
           type: boolean
-        firstName:
-          type: string
-        lastName:
-          type: string
-        email:
-          type: string
-        address:
-          type: string
-        zip:
-          type: string
-        locality:
-          type: string
-        landmark:
-          type: string
-        country:
-          type: string
-        state:
-          type: string
+        billingDetails:
+          $ref: "#/components/schemas/BillingDetails"
     OrderItemResponse:
       type: object
       properties:
@@ -487,7 +535,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/OrderItemResponse'
+            $ref: "#/components/schemas/OrderItemResponse"
         subTotal:
           type: number
           format: double
@@ -553,5 +601,5 @@ components:
         role:
           type: string
           enum:
-            - ADMIN
-            - CUSTOMER
+          - ADMIN
+          - CUSTOMER
