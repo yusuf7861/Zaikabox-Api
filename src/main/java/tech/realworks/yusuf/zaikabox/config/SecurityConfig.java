@@ -50,7 +50,12 @@ public class SecurityConfig {
                                         "/reset-password", 
                                         "/logout",
                                         "/swagger-ui.html",
-                                        "/error"
+                                        "/error",
+                                        "/swagger-ui/**",
+                                        "/api-docs/**",
+                                        "api/v1/users/send-reset-otp",
+                                        "api/v1/users/verify-otp",
+                                        "api/v1/users/reset-password"
                                 ).permitAll()
                                 // Admin-only endpoints
                                 .requestMatchers(

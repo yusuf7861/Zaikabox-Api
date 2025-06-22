@@ -1,8 +1,15 @@
 openapi: 3.1.0
 info:
-  title: Zaikabox API
-  description: API documentation for Zaikabox
-  version: 1.0.0
+  title: ZaikaBox API
+  description: This is the API documentation for the ZaikaBox application built using
+    Spring Boot.
+  contact:
+    name: Yusuf Jamal
+    email: yjamal710@gmail.com
+  version: v1
+externalDocs:
+  description: Project Docs
+  url: https://github.com/yusuf7861/Zaikabox-Api
 servers:
 - url: http://localhost:8080
   description: Generated server url
@@ -119,6 +126,66 @@ paths:
       responses:
         "200":
           description: OK
+  /api/v1/users/verify-otp:
+    post:
+      tags:
+      - user-controller
+      operationId: verifyOtp
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: string
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /api/v1/users/send-reset-otp:
+    post:
+      tags:
+      - user-controller
+      operationId: sendResetPasswordOTP
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: string
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /api/v1/users/reset-password:
+    post:
+      tags:
+      - user-controller
+      operationId: resetPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: string
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
   /api/v1/users/register:
     post:
       tags:

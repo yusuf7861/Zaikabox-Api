@@ -20,6 +20,9 @@ import tech.realworks.yusuf.zaikabox.io.user.AuthenticationRequest;
 import tech.realworks.yusuf.zaikabox.io.user.AuthenticationResponse;
 import tech.realworks.yusuf.zaikabox.io.user.UserRequest;
 import tech.realworks.yusuf.zaikabox.io.user.UserResponse;
+import tech.realworks.yusuf.zaikabox.io.user.ResetPasswordRequest;
+import tech.realworks.yusuf.zaikabox.io.user.SendResetOtpRequest;
+import tech.realworks.yusuf.zaikabox.io.user.VerifyOtpRequest;
 import tech.realworks.yusuf.zaikabox.repository.userRepo.UserRepository;
 import tech.realworks.yusuf.zaikabox.service.userService.AppUserDetailsService;
 import tech.realworks.yusuf.zaikabox.service.userService.UserService;
@@ -182,5 +185,28 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorsResponse(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR));
         }
+    }
+
+    @PostMapping("/send-reset-otp")
+    public ResponseEntity<?> sendResetPasswordOTP(@RequestBody SendResetOtpRequest request) {
+        String email = request.getEmail();
+        String token = userService.sendPasswordResetEmail(email);
+        return ResponseEntity.ok(Map.of("token", token, "message", "OTP sent successfully"));
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
+        String token = request.getToken();
+        String otp = request.getOtp();
+        boolean valid = userService.verifyOtp(token, otp);
+        return valid ? ResponseEntity.ok(Map.of("message", "OTP verified successfully")) : ResponseEntity.badRequest().body(Map.of("message", "Invalid OTP"));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+        String token = request.getToken();
+        String password = request.getPassword();
+        userService.resetPassword(token, password);
+        return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
     }
 }

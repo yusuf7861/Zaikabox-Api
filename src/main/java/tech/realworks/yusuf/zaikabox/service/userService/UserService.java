@@ -8,4 +8,7 @@ public interface UserService {
     String findByUserId();
     UserResponse getUserProfile();
     void deleteUser();
+    String sendPasswordResetEmail(String Email);
+    boolean verifyOtp(String token, String otpInput);
+    void resetPassword(String token, String newPassword);
 }
