@@ -16,13 +16,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import tech.realworks.yusuf.zaikabox.entity.UserEntity;
 import tech.realworks.yusuf.zaikabox.io.ErrorsResponse;
+import tech.realworks.yusuf.zaikabox.io.user.ResetPasswordRequest;
+import tech.realworks.yusuf.zaikabox.io.user.SendResetOtpRequest;
+import tech.realworks.yusuf.zaikabox.io.user.VerifyOtpRequest;
 import tech.realworks.yusuf.zaikabox.io.user.AuthenticationRequest;
 import tech.realworks.yusuf.zaikabox.io.user.AuthenticationResponse;
 import tech.realworks.yusuf.zaikabox.io.user.UserRequest;
 import tech.realworks.yusuf.zaikabox.io.user.UserResponse;
-import tech.realworks.yusuf.zaikabox.io.user.ResetPasswordRequest;
-import tech.realworks.yusuf.zaikabox.io.user.SendResetOtpRequest;
-import tech.realworks.yusuf.zaikabox.io.user.VerifyOtpRequest;
 import tech.realworks.yusuf.zaikabox.repository.userRepo.UserRepository;
 import tech.realworks.yusuf.zaikabox.service.userService.AppUserDetailsService;
 import tech.realworks.yusuf.zaikabox.service.userService.UserService;
@@ -189,24 +189,36 @@ public class UserController {
 
     @PostMapping("/send-reset-otp")
     public ResponseEntity<?> sendResetPasswordOTP(@RequestBody SendResetOtpRequest request) {
-        String email = request.getEmail();
-        String token = userService.sendPasswordResetEmail(email);
-        return ResponseEntity.ok(Map.of("token", token, "message", "OTP sent successfully"));
+        try {
+            String email = request.getEmail();
+            String token = userService.sendPasswordResetEmail(email);
+            return ResponseEntity.ok(Map.of("token", token, "message", "OTP sent successfully"));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
-        String token = request.getToken();
-        String otp = request.getOtp();
-        boolean valid = userService.verifyOtp(token, otp);
-        return valid ? ResponseEntity.ok(Map.of("message", "OTP verified successfully")) : ResponseEntity.badRequest().body(Map.of("message", "Invalid OTP"));
+        try {
+            String token = request.getToken();
+            String otp = request.getOtp();
+            boolean valid = userService.verifyOtp(token, otp);
+            return valid ? ResponseEntity.ok(Map.of("message", "OTP verified successfully")) : ResponseEntity.badRequest().body(Map.of("message", "Invalid OTP"));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
-        String token = request.getToken();
-        String password = request.getPassword();
-        userService.resetPassword(token, password);
-        return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
+        try {
+            String token = request.getToken();
+            String password = request.getPassword();
+            userService.resetPassword(token, password);
+            return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

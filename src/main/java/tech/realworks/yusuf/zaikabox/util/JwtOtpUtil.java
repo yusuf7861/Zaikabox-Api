@@ -14,7 +14,7 @@ import java.util.Date;
 
 @Component
 public class JwtOtpUtil {
-    @Value( "${jwt.otp.secret.key}")
+    @Value( "${jwt.secret.key}")
     private String SECRET_KEY;
 
     private SecretKey getSigningKey() {

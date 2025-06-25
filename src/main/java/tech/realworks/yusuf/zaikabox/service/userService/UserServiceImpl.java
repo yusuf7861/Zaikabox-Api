@@ -2,7 +2,6 @@ package tech.realworks.yusuf.zaikabox.service.userService;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
-import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -17,7 +16,6 @@ import tech.realworks.yusuf.zaikabox.repository.CartRepository;
 import tech.realworks.yusuf.zaikabox.repository.userRepo.UserRepository;
 import tech.realworks.yusuf.zaikabox.util.JwtOtpUtil;
 
-import java.util.Optional;
 import java.util.Random;
 
 @Service
