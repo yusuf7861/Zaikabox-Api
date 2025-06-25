@@ -24,11 +24,3 @@ jobs:
 
       - name: Run tests
         run: mvn test
-        env:
-          AZURE_CONNECTION_STRING: ${{ secrets.AZURE_CONNECTION_STRING }}
-          AZURE_CONTAINER_NAME: ${{ secrets.AZURE_CONTAINER_NAME }}
-          DB_URI: ${{ secrets.DB_URI }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          MAIL_HOST: ${{ secrets.MAIL_HOST }}
-          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
-          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
