@@ -29,7 +29,7 @@ public class FoodController {
     public FoodResponse addFood(@RequestPart("food") String foodString, @RequestPart("file") MultipartFile file) {
         ObjectMapper objectMapper = new ObjectMapper();
 
-        FoodRequest foodRequest = null;
+        FoodRequest foodRequest;
         try {
             foodRequest = objectMapper.readValue(foodString, FoodRequest.class);
         } catch (JsonProcessingException var6) {

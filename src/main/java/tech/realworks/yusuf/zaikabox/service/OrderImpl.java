@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import tech.realworks.yusuf.zaikabox.entity.OrderEntity;
 import tech.realworks.yusuf.zaikabox.entity.Status;
-import tech.realworks.yusuf.zaikabox.io.ErrorsResponse;
 import tech.realworks.yusuf.zaikabox.repository.OrderRepository;
 
 import java.util.Optional;
@@ -21,7 +20,7 @@ public class OrderImpl implements OrderService{
     public void changeStatusOfOrder(String orderId, Status status) {
         Optional<OrderEntity> byOrderId = orderRepository.findByOrderId(orderId);
         if (byOrderId.isEmpty()) {
-            log.error("Order not found with ID: {}", orderId);
+            log.error("Order not found: {}", orderId);
             return;
         }
 
