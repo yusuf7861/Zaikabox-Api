@@ -1,7 +1,7 @@
 name: Build & Test Spring Boot (PR to Stage)
 
 on:
-  pull_request:
+  push:
     branches:
       - stage
 
