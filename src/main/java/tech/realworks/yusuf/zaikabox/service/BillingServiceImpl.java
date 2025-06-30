@@ -4,7 +4,12 @@ import com.lowagie.text.*;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
+import com.razorpay.Order;
+import com.razorpay.RazorpayClient;
+import com.razorpay.RazorpayException;
 import lombok.RequiredArgsConstructor;
+import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import tech.realworks.yusuf.zaikabox.entity.*;
 import tech.realworks.yusuf.zaikabox.io.OrderItemRequest;
@@ -32,12 +37,20 @@ public class BillingServiceImpl implements BillingService {
     private final CartRepository cartRepository;
     private final UserService userService;
     private final CartService cartService;
+    private RazorpayClient client;
+
+    @Value("${razorpay.currency}")
+    private String razorPayCurrency;
+
+    @Value("${razorpay.company-name}")
+    private String companyName;
 
     // Default GST rate (5%)
     private static final double DEFAULT_GST_RATE = 5.0;
 
     @Override
-    public OrderResponse createOrder(OrderRequest orderRequest) {
+    public OrderResponse createOrder(OrderRequest orderRequest) throws RazorpayException {
+
         String customerId = userService.findByUserId();
         List<OrderItemEntity> orderItems;
 
@@ -67,17 +80,28 @@ public class BillingServiceImpl implements BillingService {
                 .gstAmount(gstAmount)
                 .totalAmountWithGST(totalAmountWithGST)
                 .paymentMode(orderRequest.getPaymentMode())
-                .orderDate(LocalDateTime.now())
                 .status(Status.PENDING)
+                .orderDate(LocalDateTime.now())
                 .billingDetails((orderRequest.getBillingDetails()))
                 .build();
 
-        orderEntity = orderRepository.save(orderEntity);
 
         // Clear the cart if we used it for the order
         if (orderRequest.isUseCart()) {
             cartService.clearCart();
         }
+
+        JSONObject orderReq = new JSONObject();
+        orderReq.put("amount", Math.round(totalAmountWithGST * 100) );
+        orderReq.put("currency", "INR");
+        orderReq.put("receipt", orderEntity.getOrderId());
+
+        Order razorPayOrder = client.orders.create(orderReq);
+
+        orderEntity.setRazorpayOrderId(razorPayOrder.get("id"));
+        orderEntity.setPaymentStatus(razorPayOrder.get("status"));
+
+        orderEntity = orderRepository.save(orderEntity);
 
         return convertToResponse(orderEntity);
     }
