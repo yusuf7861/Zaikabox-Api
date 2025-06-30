@@ -42,9 +42,6 @@ public class BillingServiceImpl implements BillingService {
     @Value("${razorpay.currency}")
     private String razorPayCurrency;
 
-    @Value("${razorpay.company-name}")
-    private String companyName;
-
     // Default GST rate (5%)
     private static final double DEFAULT_GST_RATE = 5.0;
 
@@ -93,7 +90,7 @@ public class BillingServiceImpl implements BillingService {
 
         JSONObject orderReq = new JSONObject();
         orderReq.put("amount", Math.round(totalAmountWithGST * 100) );
-        orderReq.put("currency", "INR");
+        orderReq.put("currency", razorPayCurrency);
         orderReq.put("receipt", orderEntity.getOrderId());
 
         Order razorPayOrder = client.orders.create(orderReq);
