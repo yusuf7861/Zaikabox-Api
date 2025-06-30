@@ -33,4 +33,6 @@ public class OrderEntity {
     private LocalDateTime orderDate; // Date and time when the order was placed
     private Status status; // Order status (e.g., PENDING, CONFIRMED, DELIVERED)
     private BillingDetails billingDetails;
+    private String razorpayOrderId;
+    private String paymentStatus;
 }

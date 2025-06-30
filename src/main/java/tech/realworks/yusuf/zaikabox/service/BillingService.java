@@ -1,5 +1,6 @@
 package tech.realworks.yusuf.zaikabox.service;
 
+import com.razorpay.RazorpayException;
 import tech.realworks.yusuf.zaikabox.entity.Status;
 import tech.realworks.yusuf.zaikabox.io.OrderRequest;
 import tech.realworks.yusuf.zaikabox.io.OrderResponse;
@@ -16,7 +17,7 @@ public interface BillingService {
      * @param orderRequest The order request containing order details
      * @return The created order response
      */
-    OrderResponse createOrder(OrderRequest orderRequest);
+    OrderResponse createOrder(OrderRequest orderRequest) throws RazorpayException;
 
     /**
      * Get an order by its ID

@@ -1,5 +1,6 @@
 package tech.realworks.yusuf.zaikabox.service;
 
+import com.razorpay.RazorpayException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -15,7 +16,7 @@ import tech.realworks.yusuf.zaikabox.io.OrderResponse;
 import tech.realworks.yusuf.zaikabox.repository.CartRepository;
 import tech.realworks.yusuf.zaikabox.repository.FoodRepository;
 import tech.realworks.yusuf.zaikabox.repository.OrderRepository;
-import tech.realworks.yusuf.zaikabox.service.userService.UserService;
+import tech.realworks.yusuf.zaikabox.service.userservice.UserService;
 
 import java.util.*;
 
@@ -76,7 +77,7 @@ class BillingServiceImplTest {
     }
 
     @Test
-    void createOrderFromCartItems() {
+    void createOrderFromCartItems() throws RazorpayException {
         // Arrange
         Map<String, Integer> cartItems = new HashMap<>();
         cartItems.put(FOOD_ID_1, 1); // 1 Paneer Butter Masala
@@ -91,7 +92,12 @@ class BillingServiceImplTest {
                 .build();
 
         // Act
-        OrderResponse response = billingService.createOrder(orderRequest);
+        OrderResponse response = null;
+        try {
+            response = billingService.createOrder(orderRequest);
+        } catch (RazorpayException e) {
+            throw new RuntimeException(e);
+        }
 
         // Assert
         assertNotNull(response);
@@ -114,7 +120,7 @@ class BillingServiceImplTest {
     }
 
     @Test
-    void createOrderFromRequestItems() {
+    void createOrderFromRequestItems() throws RazorpayException {
         // Arrange
         List<OrderItemRequest> itemRequests = new ArrayList<>();
         itemRequests.add(OrderItemRequest.builder().foodId(FOOD_ID_1).quantity(1).build()); // 1 Paneer Butter Masala

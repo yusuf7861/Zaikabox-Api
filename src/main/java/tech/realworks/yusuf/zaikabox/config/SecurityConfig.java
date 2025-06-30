@@ -1,6 +1,9 @@
 package tech.realworks.yusuf.zaikabox.config;
 
+import com.razorpay.RazorpayClient;
+import com.razorpay.RazorpayException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,7 +23,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 import tech.realworks.yusuf.zaikabox.filter.JwtAuthenticationFilter;
-import tech.realworks.yusuf.zaikabox.service.userService.AppUserDetailsService;
+import tech.realworks.yusuf.zaikabox.service.userservice.AppUserDetailsService;
 
 import java.util.List;
 
@@ -31,6 +34,12 @@ import java.util.List;
 public class SecurityConfig {
 
     private final AppUserDetailsService userDetailsService;
+
+    @Value("${razorpay.secret.key}")
+    private String razorPaySecret;
+
+    @Value("${razorpay.key.id}")
+    private String razorPayKey;
 
     @Bean
     public SecurityFilterChain securityFilter(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
@@ -99,5 +108,10 @@ public class SecurityConfig {
         authenticationProvider.setUserDetailsService(userDetailsService);
         authenticationProvider.setPasswordEncoder(passwordEncoder());
         return new ProviderManager(authenticationProvider);
+    }
+
+    @Bean
+    public RazorpayClient razorpayClient() throws RazorpayException {
+        return new RazorpayClient(razorPayKey, razorPaySecret);
     }
 }

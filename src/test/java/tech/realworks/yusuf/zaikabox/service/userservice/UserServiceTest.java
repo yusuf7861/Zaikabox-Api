@@ -1,4 +1,4 @@
-package tech.realworks.yusuf.zaikabox.service.userService;
+package tech.realworks.yusuf.zaikabox.service.userservice;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

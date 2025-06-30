@@ -1,5 +1,6 @@
 package tech.realworks.yusuf.zaikabox.controller;
 
+import com.razorpay.RazorpayException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -34,7 +35,7 @@ public class BillingController {
      * @return ResponseEntity containing the created order response
      */
     @PostMapping
-    public ResponseEntity<OrderResponse> createOrder(@RequestBody OrderRequest orderRequest) {
+    public ResponseEntity<OrderResponse> createOrder(@RequestBody OrderRequest orderRequest) throws RazorpayException {
         return ResponseEntity.status(HttpStatus.CREATED).body(billingService.createOrder(orderRequest));
     }
 

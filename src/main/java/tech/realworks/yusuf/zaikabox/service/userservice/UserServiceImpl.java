@@ -1,4 +1,4 @@
-package tech.realworks.yusuf.zaikabox.service.userService;
+package tech.realworks.yusuf.zaikabox.service.userservice;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;

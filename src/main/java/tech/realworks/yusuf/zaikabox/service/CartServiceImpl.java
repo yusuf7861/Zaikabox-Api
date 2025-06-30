@@ -7,7 +7,7 @@ import tech.realworks.yusuf.zaikabox.io.CartRequest;
 import tech.realworks.yusuf.zaikabox.io.CartResponse;
 import tech.realworks.yusuf.zaikabox.repository.CartRepository;
 import tech.realworks.yusuf.zaikabox.repository.userRepo.UserRepository;
-import tech.realworks.yusuf.zaikabox.service.userService.UserService;
+import tech.realworks.yusuf.zaikabox.service.userservice.UserService;
 
 import java.util.HashMap;
 import java.util.Map;

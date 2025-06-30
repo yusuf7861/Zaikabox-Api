@@ -1,4 +1,4 @@
-package tech.realworks.yusuf.zaikabox.service.userService;
+package tech.realworks.yusuf.zaikabox.service.userservice;
 
 import tech.realworks.yusuf.zaikabox.io.user.UserRequest;
 import tech.realworks.yusuf.zaikabox.io.user.UserResponse;
