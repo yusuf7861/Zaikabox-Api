@@ -20,7 +20,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 import tech.realworks.yusuf.zaikabox.filter.JwtAuthenticationFilter;
-import tech.realworks.yusuf.zaikabox.service.userService.AppUserDetailsService;
+import tech.realworks.yusuf.zaikabox.service.userservice.AppUserDetailsService;
 
 import java.util.List;
 

@@ -15,7 +15,7 @@ import tech.realworks.yusuf.zaikabox.io.OrderResponse;
 import tech.realworks.yusuf.zaikabox.repository.CartRepository;
 import tech.realworks.yusuf.zaikabox.repository.FoodRepository;
 import tech.realworks.yusuf.zaikabox.repository.OrderRepository;
-import tech.realworks.yusuf.zaikabox.service.userService.UserService;
+import tech.realworks.yusuf.zaikabox.service.userservice.UserService;
 
 import java.util.*;
 

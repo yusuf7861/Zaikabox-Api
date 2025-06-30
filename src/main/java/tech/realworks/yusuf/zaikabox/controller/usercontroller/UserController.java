@@ -24,8 +24,8 @@ import tech.realworks.yusuf.zaikabox.io.user.AuthenticationResponse;
 import tech.realworks.yusuf.zaikabox.io.user.UserRequest;
 import tech.realworks.yusuf.zaikabox.io.user.UserResponse;
 import tech.realworks.yusuf.zaikabox.repository.userRepo.UserRepository;
-import tech.realworks.yusuf.zaikabox.service.userService.AppUserDetailsService;
-import tech.realworks.yusuf.zaikabox.service.userService.UserService;
+import tech.realworks.yusuf.zaikabox.service.userservice.AppUserDetailsService;
+import tech.realworks.yusuf.zaikabox.service.userservice.UserService;
 import tech.realworks.yusuf.zaikabox.util.JwtUtil;
 
 import java.time.Duration;

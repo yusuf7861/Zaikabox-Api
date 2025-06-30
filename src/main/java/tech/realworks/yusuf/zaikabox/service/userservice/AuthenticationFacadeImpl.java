@@ -1,4 +1,4 @@
-package tech.realworks.yusuf.zaikabox.service.userService;
+package tech.realworks.yusuf.zaikabox.service.userservice;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
