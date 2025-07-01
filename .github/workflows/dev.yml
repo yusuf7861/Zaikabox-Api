@@ -47,7 +47,7 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Build Docker image
-        run: docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/zaikabox-app:latest .
+        run: docker build --no-cache -t ${{ secrets.DOCKER_HUB_USERNAME }}/zaikabox-app:latest .
 
       - name: Push Docker image
         run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/zaikabox-app:latest
