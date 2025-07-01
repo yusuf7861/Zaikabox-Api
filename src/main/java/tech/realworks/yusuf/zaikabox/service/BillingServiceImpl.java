@@ -37,7 +37,7 @@ public class BillingServiceImpl implements BillingService {
     private final CartRepository cartRepository;
     private final UserService userService;
     private final CartService cartService;
-    private RazorpayClient client;
+    private final RazorpayClient client;
 
     @Value("${razorpay.currency}")
     private String razorPayCurrency;

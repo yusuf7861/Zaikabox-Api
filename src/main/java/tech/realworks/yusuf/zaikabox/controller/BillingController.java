@@ -1,7 +1,10 @@
 package tech.realworks.yusuf.zaikabox.controller;
 
 import com.razorpay.RazorpayException;
+import com.razorpay.Utils;
 import lombok.RequiredArgsConstructor;
+import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -12,6 +15,7 @@ import tech.realworks.yusuf.zaikabox.entity.Status;
 import tech.realworks.yusuf.zaikabox.io.ErrorsResponse;
 import tech.realworks.yusuf.zaikabox.io.OrderRequest;
 import tech.realworks.yusuf.zaikabox.io.OrderResponse;
+import tech.realworks.yusuf.zaikabox.io.RazorpayPaymentVerificationDTO;
 import tech.realworks.yusuf.zaikabox.service.BillingService;
 import tech.realworks.yusuf.zaikabox.service.OrderService;
 
@@ -29,6 +33,9 @@ public class BillingController {
     private final BillingService billingService;
     private final OrderService orderService;
 
+    @Value("${razorpay.secret.key}")
+    private String RAZORPAY_SECRET;
+
     /**
      * Create a new order
      * @param orderRequest The order request containing order details
@@ -38,6 +45,34 @@ public class BillingController {
     public ResponseEntity<OrderResponse> createOrder(@RequestBody OrderRequest orderRequest) throws RazorpayException {
         return ResponseEntity.status(HttpStatus.CREATED).body(billingService.createOrder(orderRequest));
     }
+
+    /**
+     * Verifies payment requests.
+     * @param dto the payment verification data transfer object
+     * @return ResponseEntity with a success message if verified, or an error message otherwise
+     */
+    @PostMapping("/verify-payment")
+    public ResponseEntity<String> verifyPayment(@RequestBody RazorpayPaymentVerificationDTO dto) {
+        try {
+            JSONObject options = new JSONObject();
+            options.put("razorpay_order_id", dto.getRazorpayOrderId());
+            options.put("razorpay_payment_id", dto.getRazorpayPaymentId());
+            options.put("razorpay_signature", dto.getRazorpaySignature());
+
+            boolean isValid = Utils.verifyPaymentSignature(options, RAZORPAY_SECRET);
+
+            if (isValid) {
+                return ResponseEntity.ok("Payment verified successfully");
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid payment signature");
+            }
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Verification failed: " + e.getMessage());
+        }
+    }
+
+
 
     /**
      * Get an order by its ID
