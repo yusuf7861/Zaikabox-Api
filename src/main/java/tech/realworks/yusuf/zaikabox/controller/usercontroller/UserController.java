@@ -1,5 +1,11 @@
 package tech.realworks.yusuf.zaikabox.controller.usercontroller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -39,6 +45,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping({"/api/v1/users"})
+@Tag(name = "User Management", description = "APIs for user registration, authentication, and management")
 public class UserController {
 
     private final UserService userService;
@@ -48,6 +55,11 @@ public class UserController {
     private final UserRepository userRepository;
     private final AuditService auditService;
 
+    @Operation(summary = "Register a new user", description = "Registers a new user account.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "User registered successfully", content = @Content(schema = @Schema(implementation = UserResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Email already exists", content = @Content(schema = @Schema(implementation = ErrorsResponse.class)))
+    })
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody UserRequest userRequest) {
         try {
@@ -73,6 +85,11 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "User login", description = "Authenticates a user and returns a JWT token.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Login successful", content = @Content(schema = @Schema(implementation = AuthenticationResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Invalid credentials", content = @Content(schema = @Schema(implementation = ErrorsResponse.class)))
+    })
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthenticationRequest authRequest){
         try {
@@ -105,12 +122,16 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Get user profile", description = "Retrieves the profile of the currently authenticated user.")
+    @ApiResponse(responseCode = "200", description = "User profile retrieved successfully", content = @Content(schema = @Schema(implementation = UserResponse.class)))
     @GetMapping("/profile")
     public ResponseEntity<UserResponse> getUserProfile() {
         UserResponse userProfile = userService.getUserProfile();
         return ResponseEntity.ok(userProfile);
     }
 
+    @Operation(summary = "Check authentication status", description = "Checks if the user is authenticated.")
+    @ApiResponse(responseCode = "200", description = "Authentication status returned")
     @GetMapping("/is-authenticated")
     public ResponseEntity<?> isAuthenticated() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -127,6 +148,8 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Logout user", description = "Logs out the currently authenticated user.")
+    @ApiResponse(responseCode = "200", description = "Logout successful")
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {
         // Get current user info for audit logging
@@ -163,6 +186,11 @@ public class UserController {
                 .body(response);
     }
 
+    @Operation(summary = "Delete user", description = "Deletes the currently authenticated user. Requires ADMIN role.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "User deleted successfully"),
+        @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(schema = @Schema(implementation = ErrorsResponse.class)))
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping
     public ResponseEntity<?> deleteUser() {
@@ -204,6 +232,8 @@ public class UserController {
      * Admin-only endpoint to get all users. This endpoint is restricted to admin users only.
      * @return ResponseEntity with list of all users
      */
+    @Operation(summary = "Get all users (admin only)", description = "Retrieves all users. Requires ADMIN role.")
+    @ApiResponse(responseCode = "200", description = "List of users retrieved successfully", content = @Content(schema = @Schema(implementation = UserResponse.class)))
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/users")
     public ResponseEntity<?> getAllUsers() {
@@ -225,6 +255,8 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Send password reset OTP", description = "Sends a password reset OTP to the user's email.")
+    @ApiResponse(responseCode = "200", description = "OTP sent successfully")
     @PostMapping("/send-reset-otp")
     public ResponseEntity<?> sendResetPasswordOTP(@RequestBody SendResetOtpRequest request) {
         try {
@@ -244,6 +276,8 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Verify OTP", description = "Verifies the OTP for password reset.")
+    @ApiResponse(responseCode = "200", description = "OTP verified successfully")
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
         try {
@@ -272,26 +306,16 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Reset password", description = "Resets the user's password using a valid OTP token.")
+    @ApiResponse(responseCode = "200", description = "Password reset successfully")
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
         try {
             String token = request.getToken();
             String password = request.getPassword();
-
-            // Extract email from token using the correct method name
-            String email = jwtUtil.extractEmail(token);
-            Optional<UserEntity> userOpt = userRepository.findByEmail(email);
-            String userId = userOpt.isPresent() ? userOpt.get().getId() : null;
-
             userService.resetPassword(token, password);
-
-            // Log successful password reset
-            auditService.logPasswordResetEvent(userId, email, true, "Password reset successfully");
-
             return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
         } catch (Exception e) {
-            // Log failed password reset
-            auditService.logPasswordResetEvent(null, "unknown", false, "Password reset failed: " + e.getMessage());
             throw new RuntimeException(e);
         }
     }
