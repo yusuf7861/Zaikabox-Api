@@ -109,12 +109,7 @@
             <artifactId>razorpay-java</artifactId>
             <version>1.4.8</version>
         </dependency>
-        <!-- OpenAI API Client for chatbot capabilities -->
-        <dependency>
-            <groupId>com.theokanning.openai-gpt3-java</groupId>
-            <artifactId>service</artifactId>
-            <version>0.18.2</version>
-        </dependency>
+<!-- Removed unused OpenAI API Client dependency -->
 
         <!-- WebSocket support for real-time chat -->
         <dependency>
