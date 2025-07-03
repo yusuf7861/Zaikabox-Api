@@ -23,6 +23,7 @@ jobs:
       MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
       RAZORPAY_KEY: ${{ secrets.RAZORPAY_KEY }}
       RAZORPAY_SECRET: ${{ secrets.RAZORPAY_SECRET }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
     steps:
       - name: Checkout code

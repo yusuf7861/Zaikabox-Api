@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Chat Support</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+        .chat-container { max-width: 500px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 24px; }
+        .chat-log { height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 12px; background: #fafafa; margin-bottom: 16px; }
+        .chat-message { margin-bottom: 12px; }
+        .chat-message.user { text-align: right; color: #1976d2; }
+        .chat-message.gemini { text-align: left; color: #388e3c; }
+        .chat-input-row { display: flex; }
+        .chat-input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .chat-send { padding: 8px 16px; background: #1976d2; color: #fff; border: none; border-radius: 4px; margin-left: 8px; cursor: pointer; }
+        .chat-send:disabled { background: #90caf9; }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <h2>Gemini Chat Support</h2>
+        <div class="chat-log" id="chatLog"></div>
+        <form id="chatForm" class="chat-input-row">
+            <input type="text" id="chatInput" class="chat-input" placeholder="Type your message..." autocomplete="off" required />
+            <button type="submit" class="chat-send">Send</button>
+        </form>
+    </div>
+    <script>
+        const chatLog = document.getElementById('chatLog');
+        const chatForm = document.getElementById('chatForm');
+        const chatInput = document.getElementById('chatInput');
+
+        function appendMessage(text, sender) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-message ' + sender;
+            msgDiv.textContent = text;
+            chatLog.appendChild(msgDiv);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        chatForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const userMsg = chatInput.value.trim();
+            if (!userMsg) return;
+            appendMessage(userMsg, 'user');
+            chatInput.value = '';
+            appendMessage('...', 'gemini');
+            try {
+                const response = await fetch('/api/chat/gemini', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: userMsg
+                });
+                const data = await response.text();
+                chatLog.removeChild(chatLog.lastChild);
+                appendMessage(data, 'gemini');
+            } catch (err) {
+                chatLog.removeChild(chatLog.lastChild);
+                appendMessage('Error contacting Gemini API.', 'gemini');
+            }
+        });
+    </script>
+</body>
+</html>
+
