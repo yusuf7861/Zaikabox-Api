@@ -1,77 +1,472 @@
-# Zaikabox API
+# Zaikabox API Architecture and Workflows
 
-Zaikabox API is a Spring Boot-based backend service for managing food orders, billing, carts, and user authentication for a food delivery or restaurant management platform.
+Zaikabox API is a comprehensive Spring Boot application that provides a backend service for food ordering platforms. Built using Java 17 and MongoDB, it implements a secure JWT-based authentication system and follows a clean architecture pattern.
 
-## Features
-- User registration, authentication, and role management
-- Food item management (CRUD)
-- Cart operations (add, remove, update items)
-- Order placement and tracking
-- Billing and payment details
-- Contact us support
-- JWT-based authentication and authorization
-- Azure and OpenAPI configuration
+## Core Features
 
-## Project Structure
+### 1. User Management System
+
+The user management system handles all aspects of user accounts, authentication, and authorization.
+
+#### Features:
+- User registration with validation
+- JWT-based secure authentication
+- Role-based authorization (USER, ADMIN)
+- Password reset functionality with OTP verification
+- User profile management
+- Session management with logout functionality
+- Admin panel for user management
+
+#### User Flow:
 ```
-src/main/java/tech/realworks/yusuf/zaikabox/
-├── ZaikaboxApiApplication.java
-├── config/                # Configuration classes (Security, Azure, OpenAPI)
-├── controller/            # REST controllers (Billing, Cart, Food, User, etc.)
-├── entity/                # JPA entities (User, Order, Food, etc.)
-├── filter/                # JWT authentication filters
-├── io/                    # Request/response DTOs
-├── repository/            # Spring Data JPA repositories
-├── service/               # Service interfaces and implementations
-├── util/                  # Utility classes (JWT, etc.)
+Registration → Email Verification → Login → Access Protected Resources
 ```
 
-## Getting Started
+### 2. Food Management System
 
-### Prerequisites
-- Java 17 or later
-- Maven 3.6+
-- (Optional) Docker
+The food management system provides functionality for creating, retrieving, updating, and deleting food items in the catalog.
 
-### Build & Run
+#### Features:
+- Add new food items with images
+- Retrieve food items individually or as a collection
+- Update food item details
+- Remove food items from the catalog
+- Image storage and retrieval
 
-1. **Clone the repository:**
-   ```bash
-   git clone <repo-url>
-   cd Zaikabox-Api
-   ```
-2. **Configure application properties:**
-   Edit `src/main/resources/application.properties` as needed for your environment (DB, Azure, JWT secrets, etc.).
-3. **Build the project:**
-   ```bash
-   ./mvnw clean install
-   ```
-4. **Run the application:**
-   ```bash
-   ./mvnw spring-boot:run
-   ```
-   The API will be available at `http://localhost:8080` by default.
-
-### API Documentation
-- OpenAPI/Swagger docs available at `/swagger-ui.html` or `/v3/api-docs` when the app is running.
-- See `api-docs.yaml` for the OpenAPI specification.
-
-## Testing
-Run all tests with:
-```bash
-./mvnw test
+#### Food Management Flow:
+```
+Admin Login → Add Food Item → Upload Image → Publish to Catalog
 ```
 
-## Docker
-To build and run with Docker:
-```bash
-docker build -t zaikabox-api .
-docker run -p 8080:8080 zaikabox-api
+### 3. Shopping Cart System
+
+The shopping cart system allows users to add, update, and remove food items from their cart before placing an order.
+
+#### Features:
+- Add items to cart
+- Remove items from cart
+- Update item quantities
+- View cart contents
+- Clear entire cart
+
+#### Cart Flow:
+```
+Browse Foods → Add to Cart → Update Quantities → Proceed to Checkout
 ```
 
-## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+### 4. Order Management System
 
-## License
-[MIT](LICENSE)
+The order management system handles the creation, tracking, and management of food orders.
 
+#### Features:
+- Create new orders from cart items
+- Track order status (PENDING, PROCESSING, DELIVERED, CANCELLED)
+- View order history
+- Update order status (admin functionality)
+- Order cancellation
+
+#### Order Flow:
+```
+Cart Checkout → Order Creation → Order Processing → Order Delivery
+```
+
+### 5. Billing System
+
+The billing system generates and manages billing information for orders.
+
+#### Features:
+- Generate PDF bills for orders
+- Generate text format bills
+- Store billing details
+- Associate billing information with orders
+
+#### Billing Flow:
+```
+Order Confirmation → Billing Details Collection → Bill Generation
+```
+
+### 6. Contact Support System
+
+The contact support system allows users to send enquiries and feedback to administrators.
+
+#### Features:
+- Submit contact form with user details and message
+- Email notification to administrators
+
+#### Contact Flow:
+```
+Fill Contact Form → Submit → Email Sent to Support
+```
+
+## Technical Features
+
+### 1. Security
+
+- JWT-based authentication
+- Password encryption
+- Role-based access control
+- Cross-Origin Resource Sharing (CORS) configuration
+- Secure HTTP headers
+
+### 2. API Documentation
+
+- OpenAPI/Swagger documentation
+- Detailed endpoint descriptions
+- Request/response schema definitions
+
+### 3. Containerization
+
+- Docker support for easy deployment
+- Container orchestration readiness
+
+## System Architecture
+
+Zaikabox API follows the standard Spring Boot architecture with the following components:
+
+### Layers:
+1. **Controllers** - Handle HTTP requests and responses
+2. **Services** - Implement business logic
+3. **Repositories** - Data access layer for MongoDB interaction
+4. **Entities** - Domain models representing database documents
+5. **DTOs (Data Transfer Objects)** - Request/response objects
+6. **Filters** - JWT authentication and request filtering
+7. **Configuration** - Application configuration classes
+8. **Utilities** - Helper classes for common functionality
+
+### Data Flow:
+```
+Client Request → JWT Filter → Controller → Service → Repository → Database
+                                   ↓
+Client Response ← Controller ← Service ← Repository ← Database
+```
+
+## Database Schema
+
+The application uses MongoDB with the following main collections:
+
+1. **Users** - Store user account information
+2. **Foods** - Food catalog items
+3. **Carts** - User shopping carts
+4. **Orders** - User orders
+5. **BillingDetails** - Order billing information
+
+## Integration Points
+
+1. **Payment Gateways** - Ready for integration with payment processors
+2. **Email Services** - For notifications and password resets
+3. **Google Gemini AI** - For AI-powered features
+4. **Azure Cloud Services** - For deployment and scaling
+5. **Image Storage Services** - For food item images
+
+
+## System Architecture
+
+The Zaikabox API is built using a layered architecture pattern with Spring Boot, following industry best practices for separation of concerns and maintainability.
+
+### Architectural Layers
+
+```
+┌─────────────────────────────────────────────────────┐
+│                  Client Applications                │
+└───────────────────────┬─────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│                  JWT Filter Layer                   │
+└───────────────────────┬─────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│               Controller Layer (REST)               │
+├─────────────────────────────────────────────────────┤
+│  UserController │ FoodController │ BillingController│
+│  CartController │ ContactController │ GeminiController│
+└───────────────────────┬─────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│                   Service Layer                     │
+├─────────────────────────────────────────────────────┤
+│  UserService │ FoodService │ BillingService        │
+│  CartService │ ContactService │ GeminiService      │
+└───────────────────────┬─────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│                Repository Layer                     │
+└───────────────────────┬─────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│                   MongoDB Database                  │
+├─────────────────────────────────────────────────────┤
+│  Users │ Foods │ Carts │ Orders │ BillingDetails   │
+└─────────────────────────────────────────────────────┘
+```
+
+## Key Workflows
+
+### 1. User Authentication Flow
+
+```
+┌──────────┐     ┌────────────┐     ┌─────────────┐     ┌───────────┐
+│          │     │            │     │             │     │           │
+│  Client  ├────►│  /login    ├────►│ UserService ├────►│ Repository│
+│          │     │  endpoint  │     │             │     │           │
+└────┬─────┘     └──────┬─────┘     └──────┬──────┘     └─────┬─────┘
+     │                  │                  │                  │
+     │                  │                  │                  │
+     │                  │          Validate Credentials       │
+     │                  │◄─────────────────┴──────────────────┘
+     │                  │
+     │      Return JWT  │
+     │◄─────────────────┘
+     │
+     │                  ┌────────────────┐
+     │                  │                │
+     └─────────────────►│ Protected API  │
+                        │ Endpoints      │
+                        └────────────────┘
+```
+
+### 2. Order Creation Flow
+
+```
+┌──────────┐     ┌─────────────┐     ┌─────────────┐     ┌────────────┐     ┌───────────┐
+│          │     │             │     │             │     │            │     │           │
+│  Client  ├────►│ CartService ├────►│ OrderService├────►│BillingService───►│ Database  │
+│          │     │             │     │             │     │            │     │           │
+└──────────┘     └─────────────┘     └─────────────┘     └────────────┘     └───────────┘
+      │                                                                            ▲
+      │                                                                            │
+      │                                                                            │
+      └────────────────────────────────────────────────────────────────────────────┘
+                          Order confirmation and details
+```
+
+### 3. Food Management Flow
+
+```
+┌───────────┐     ┌──────────────┐     ┌────────────┐     ┌───────────┐
+│           │     │              │     │            │     │           │
+│  Admin    ├────►│FoodController├────►│FoodService ├────►│ Database  │
+│           │     │              │     │            │     │           │
+└───────────┘     └──────────────┘     └────────────┘     └───────────┘
+                          │                                      ▲
+                          │                                      │
+                          │                                      │
+┌───────────┐             │                                      │
+│           │             │                                      │
+│  Customer ◄─────────────┴──────────────────────────────────────┘
+│           │                   Food catalog view
+└───────────┘
+```
+
+### 4. User Registration Flow
+
+```
+┌──────────┐     ┌────────────────┐     ┌─────────────┐     ┌───────────┐
+│          │     │                │     │             │     │           │
+│  Client  ├────►│UserController  ├────►│ UserService ├────►│ Repository│
+│          │     │/register       │     │             │     │           │
+└──────────┘     └────────────────┘     └─────────────┘     └───────────┘
+      │                 ▲                      │                  ▲
+      │                 │                      │                  │
+      │                 │                      │                  │
+      │                 └──────────────────────┘                  │
+      │                   Validation results                      │
+      │                                                          │
+      └──────────────────────────────────────────────────────────┘
+                         Confirmation
+```
+
+### 5. Cart Operations Flow
+
+```
+┌──────────┐     ┌────────────────┐     ┌─────────────┐     ┌───────────┐
+│          │     │                │     │             │     │           │
+│  Client  ├────►│CartController  ├────►│ CartService ├────►│ Repository│
+│          │     │                │     │             │     │           │
+└──────────┘     └────────────────┘     └─────────────┘     └───────────┘
+      ▲                                       │                  ▲
+      │                                       │                  │
+      │                                       │                  │
+      └───────────────────────────────────────┴──────────────────┘
+                   Updated Cart Response
+```
+
+## Security Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      HTTP Request                           │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      CORS Filter                            │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  JWT Authentication Filter                  │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│               Spring Security Config                        │
+├─────────────────────────────────────────────────────────────┤
+│  Role-based URL Authorization │ Method Security             │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   Protected Resources                       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Database Schema
+
+```
+┌───────────────────────┐       ┌───────────────────────┐
+│      UserEntity       │       │      FoodEntity       │
+├───────────────────────┤       ├───────────────────────┤
+│ id: String            │       │ id: String            │
+│ name: String          │       │ name: String          │
+│ email: String         │       │ description: String   │
+│ password: String      │       │ price: Double         │
+│ role: Role            │       │ imageUrl: String      │
+└─────────┬─────────────┘       └───────────┬───────────┘
+          │                                 │
+          │                                 │
+          │                                 │
+          ▼                                 ▼
+┌───────────────────────┐       ┌───────────────────────┐
+│      CartEntity       │       │     OrderEntity       │
+├───────────────────────┤       ├───────────────────────┤
+│ id: String            │       │ id: String            │
+│ userId: String        │       │ userId: String        │
+│ items: Map<Food,Int>  │◄─────►│ items: List<OrderItem>│
+└───────────────────────┘       │ status: Status        │
+                                │ orderDate: Date       │
+                                │ totalAmount: Double   │
+                                └─────────┬─────────────┘
+                                          │
+                                          │
+                                          ▼
+                                ┌───────────────────────┐
+                                │   BillingDetails      │
+                                ├───────────────────────┤
+                                │ id: String            │
+                                │ orderId: String       │
+                                │ paymentMethod: String │
+                                │ address: String       │
+                                │ contactNumber: String │
+                                └───────────────────────┘
+```
+
+## Technology Stack
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Zaikabox API                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────────┐   ┌─────────────────┐   ┌────────────┐ │
+│  │                 │   │                 │   │            │ │
+│  │   Spring Boot   │   │    MongoDB      │   │  JWT Auth  │ │
+│  │                 │   │                 │   │            │ │
+│  └─────────────────┘   └─────────────────┘   └────────────┘ │
+│                                                             │
+│  ┌─────────────────┐   ┌─────────────────┐   ┌────────────┐ │
+│  │                 │   │                 │   │            │ │
+│  │   Spring MVC    │   │ Spring Security │   │   Docker   │ │
+│  │                 │   │                 │   │            │ │
+│  └─────────────────┘   └─────────────────┘   └────────────┘ │
+│                                                             │
+│  ┌─────────────────┐   ┌─────────────────┐   ┌────────────┐ │
+│  │                 │   │                 │   │            │ │
+│  │  Spring Data    │   │    OpenAPI      │   │   Azure    │ │
+│  │                 │   │                 │   │            │ │
+│  └─────────────────┘   └─────────────────┘   └────────────┘ │
+│                                                             │
+│  ┌─────────────────┐   ┌─────────────────┐   ┌────────────┐ │
+│  │                 │   │                 │   │            │ │
+│  │   Lombok        │   │ Gemini AI       │   │  PDF Gen   │ │
+│  │                 │   │                 │   │            │ │
+│  └─────────────────┘   └─────────────────┘   └────────────┘ │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## API Request-Response Flow
+
+```
+┌───────────┐     ┌────────────────┐     ┌─────────────┐     ┌───────────┐
+│           │     │                │     │             │     │           │
+│  Client   │────►│  Controller    │────►│   Service   │────►│Repository │
+│           │     │                │     │             │     │           │
+└───────────┘     └────────────────┘     └─────────────┘     └───────────┘
+      ▲                    ▲                    │                  │
+      │                    │                    │                  │
+      │      Response      │                    │                  │
+      │      (JSON)        │                    │                  │
+      │                    │                    │                  │
+      └────────────────────┘◄───────────────────┴──────────────────┘
+```
+
+## Deployment Architecture
+
+```
+┌───────────────────────────────────────────────────────────────┐
+│                     Azure Cloud Platform                      │
+│                                                               │
+│   ┌─────────────────┐      ┌─────────────────────────────┐    │
+│   │                 │      │                             │    │
+│   │   API Gateway   │─────►│   Zaikabox API Container    │    │
+│   │                 │      │                             │    │
+│   └─────────────────┘      └─────────────────┬───────────┘    │
+│                                              │                │
+│                                              │                │
+│                                              ▼                │
+│                            ┌─────────────────────────────┐    │
+│                            │                             │    │
+│                            │      MongoDB Database       │    │
+│                            │                             │    │
+│                            └─────────────────────────────┘    │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+```
+
+## Integration Architecture
+
+```
+┌───────────────────────────────────────────────────────────────┐
+│                       Zaikabox API                            │
+└───────┬─────────────────┬──────────────────┬─────────┬────────┘
+        │                 │                  │         │
+        ▼                 ▼                  ▼         ▼
+┌───────────────┐  ┌────────────┐  ┌──────────────┐  ┌─────────┐
+│               │  │            │  │              │  │         │
+│Payment Gateway│  │Email Service│  │Storage Service│  │Gemini AI│
+│               │  │            │  │              │  │         │
+└───────────────┘  └────────────┘  └──────────────┘  └─────────┘
+```
+
+## Authentication and Authorization Process
+
+```
+┌─────────┐     ┌──────────────┐     ┌───────────────┐
+│         │     │              │     │               │
+│ Client  │────►│ Authenticate ├────►│ Generate JWT  │
+│         │     │              │     │               │
+└─────────┘     └──────────────┘     └───────┬───────┘
+                                             │
+                                             │
+                                             ▼
+┌─────────────────┐     ┌──────────────┐    ┌───────────────┐
+│                 │     │              │    │               │
+│ Access Resource │◄────┤ Validate JWT │◄───┤ Store JWT     │
+│                 │     │              │    │               │
+└─────────────────┘     └──────────────┘    └───────────────┘
+```
