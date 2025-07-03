@@ -54,6 +54,8 @@ public class ChatbotController {
                 .sessionId(botResponse.getSessionId())
                 .message(botResponse.getMessage())
                 .timestamp(botResponse.getTimestamp())
+                .id(botResponse.getId())
+                .isComplete(true)
                 .build();
 
         return ResponseEntity.ok(response);
