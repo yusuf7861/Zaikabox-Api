@@ -21,7 +21,6 @@ public class MongoAuditConfig {
     @Bean
     CommandLineRunner commandLineRunner() {
         return args -> {
-            // Create the collection if it doesn't exist
             if (!mongoTemplate.collectionExists(AuditEntity.class)) {
                 mongoTemplate.createCollection(AuditEntity.class);
                 System.out.println("Created audit_logs collection");
@@ -29,7 +28,6 @@ public class MongoAuditConfig {
                 System.out.println("audit_logs collection already exists");
             }
 
-            // Create indexes for AuditEntity
             IndexOperations indexOps = mongoTemplate.indexOps(AuditEntity.class);
             IndexResolver resolver = new MongoPersistentEntityIndexResolver(mongoMappingContext);
             resolver.resolveIndexFor(AuditEntity.class).forEach(indexOps::ensureIndex);
