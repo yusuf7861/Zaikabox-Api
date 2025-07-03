@@ -1,5 +1,11 @@
 package tech.realworks.yusuf.zaikabox.controller.usercontroller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -37,6 +43,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping({"/api/v1/users"})
+@Tag(name = "User Management", description = "APIs for user registration, authentication, and management")
 public class UserController {
 
     private final UserService userService;
@@ -45,6 +52,11 @@ public class UserController {
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
 
+    @Operation(summary = "Register a new user", description = "Registers a new user account.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "User registered successfully", content = @Content(schema = @Schema(implementation = UserResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Email already exists", content = @Content(schema = @Schema(implementation = ErrorsResponse.class)))
+    })
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody UserRequest userRequest) {
         try {
@@ -59,6 +71,11 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "User login", description = "Authenticates a user and returns a JWT token.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Login successful", content = @Content(schema = @Schema(implementation = AuthenticationResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Invalid credentials", content = @Content(schema = @Schema(implementation = ErrorsResponse.class)))
+    })
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthenticationRequest authRequest){
         try {
@@ -81,12 +98,16 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Get user profile", description = "Retrieves the profile of the currently authenticated user.")
+    @ApiResponse(responseCode = "200", description = "User profile retrieved successfully", content = @Content(schema = @Schema(implementation = UserResponse.class)))
     @GetMapping("/profile")
     public ResponseEntity<UserResponse> getUserProfile() {
         UserResponse userProfile = userService.getUserProfile();
         return ResponseEntity.ok(userProfile);
     }
 
+    @Operation(summary = "Check authentication status", description = "Checks if the user is authenticated.")
+    @ApiResponse(responseCode = "200", description = "Authentication status returned")
     @GetMapping("/is-authenticated")
     public ResponseEntity<?> isAuthenticated() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -103,6 +124,8 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Logout user", description = "Logs out the currently authenticated user.")
+    @ApiResponse(responseCode = "200", description = "Logout successful")
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {
         // Clear the authentication from the security context
@@ -125,6 +148,11 @@ public class UserController {
                 .body(response);
     }
 
+    @Operation(summary = "Delete user", description = "Deletes the currently authenticated user. Requires ADMIN role.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User deleted successfully"),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(schema = @Schema(implementation = ErrorsResponse.class)))
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping
     public ResponseEntity<?> deleteUser() {
@@ -139,33 +167,8 @@ public class UserController {
         }
     }
 
-    /**
-     * Endpoint to set a user as admin. This endpoint is restricted to admin users only.
-     * @param email The email of the user to be set as admin
-     * @return ResponseEntity with success or error message
-     */
-//    @PutMapping("/admin/set-role")
-//    public ResponseEntity<?> setUserRole(@RequestParam String email, @RequestParam Role role) {
-//        try {
-//            UserEntity user = userRepository.findByEmail(email)
-//                    .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
-//
-//            user.setRole(role);
-//            userRepository.save(user);
-//
-//            Map<String, String> response = new HashMap<>();
-//            response.put("message", "User role updated successfully to " + role);
-//            return ResponseEntity.ok(response);
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                    .body(new ErrorsResponse(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR));
-//        }
-//    }
-
-    /**
-     * Admin-only endpoint to get all users. This endpoint is restricted to admin users only.
-     * @return ResponseEntity with list of all users
-     */
+    @Operation(summary = "Get all users (admin only)", description = "Retrieves all users. Requires ADMIN role.")
+    @ApiResponse(responseCode = "200", description = "List of users retrieved successfully", content = @Content(schema = @Schema(implementation = UserResponse.class)))
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/users")
     public ResponseEntity<?> getAllUsers() {
@@ -187,6 +190,8 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Send password reset OTP", description = "Sends a password reset OTP to the user's email.")
+    @ApiResponse(responseCode = "200", description = "OTP sent successfully")
     @PostMapping("/send-reset-otp")
     public ResponseEntity<?> sendResetPasswordOTP(@RequestBody SendResetOtpRequest request) {
         try {
@@ -198,6 +203,8 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Verify OTP", description = "Verifies the OTP for password reset.")
+    @ApiResponse(responseCode = "200", description = "OTP verified successfully")
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
         try {
@@ -210,6 +217,8 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Reset password", description = "Resets the user's password using a valid OTP token.")
+    @ApiResponse(responseCode = "200", description = "Password reset successfully")
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
         try {
