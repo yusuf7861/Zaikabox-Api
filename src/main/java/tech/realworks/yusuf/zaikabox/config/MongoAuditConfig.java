@@ -1,6 +1,7 @@
 package tech.realworks.yusuf.zaikabox.config;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +14,7 @@ import tech.realworks.yusuf.zaikabox.entity.AuditEntity;
 
 @Configuration
 @RequiredArgsConstructor
+@Slf4j
 public class MongoAuditConfig {
 
     private final MongoTemplate mongoTemplate;
@@ -24,9 +26,9 @@ public class MongoAuditConfig {
             // Create the collection if it doesn't exist
             if (!mongoTemplate.collectionExists(AuditEntity.class)) {
                 mongoTemplate.createCollection(AuditEntity.class);
-                System.out.println("Created audit_logs collection");
+                log.info("Created audit_logs collection");
             } else {
-                System.out.println("audit_logs collection already exists");
+                log.info("audit_logs collection already exists");
             }
 
             // Create indexes for AuditEntity
