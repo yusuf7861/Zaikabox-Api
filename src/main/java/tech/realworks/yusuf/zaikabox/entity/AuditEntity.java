@@ -39,7 +39,7 @@ public class AuditEntity {
 
     @CreatedDate
     @Indexed
-    private LocalDateTime timestamp = LocalDateTime.now(); // Default to current time
+    private LocalDateTime timestamp;
 
     public enum EventType {
         LOGIN,
