@@ -113,9 +113,8 @@ public class UserController {
             auditService.logLoginEvent(userId, authRequest.getEmail(), true, "User logged in successfully");
 
             return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
-                    .body(new AuthenticationResponse(authRequest.getEmail(), token));
+                    .body(new AuthenticationResponse(token, authRequest.getEmail()));
         } catch (AuthenticationException e) {
-            // Log failed login attempt
             auditService.logLoginEvent(null, authRequest.getEmail(), false, "Invalid credentials");
 
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorsResponse("Invalid credentials", HttpStatus.UNAUTHORIZED));
