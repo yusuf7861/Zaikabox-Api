@@ -204,126 +204,31 @@ The Zaikabox API is built using a layered architecture pattern with Spring Boot,
 └─────────────────────────────────────────────────────┘
 ```
 
+## Technology Stack
+![Technology Stack](https://i.postimg.cc/vmZdYx6v/Tech-Stack.png)
+
 ## Key Workflows
 
 ### 1. User Authentication Flow
-
-```
-┌──────────┐     ┌────────────┐     ┌─────────────┐     ┌───────────┐
-│          │     │            │     │             │     │           │
-│  Client  ├────►│  /login    ├────►│ UserService ├────►│ Repository│
-│          │     │  endpoint  │     │             │     │           │
-└────┬─────┘     └──────┬─────┘     └──────┬──────┘     └─────┬─────┘
-     │                  │                  │                  │
-     │                  │                  │                  │
-     │                  │          Validate Credentials       │
-     │                  │◄─────────────────┴──────────────────┘
-     │                  │
-     │      Return JWT  │
-     │◄─────────────────┘
-     │
-     │                  ┌────────────────┐
-     │                  │                │
-     └─────────────────►│ Protected API  │
-                        │ Endpoints      │
-                        └────────────────┘
-```
+![User Authentication Flow](https://i.postimg.cc/63x9Xb0g/User-Auth-flow.png)
 
 ### 2. Order Creation Flow
+![Order Creation Flow](https://i.postimg.cc/W1tp6kzW/Order-Creation-Flow.png)
 
-```
-┌──────────┐     ┌─────────────┐     ┌─────────────┐     ┌────────────┐     ┌───────────┐
-│          │     │             │     │             │     │            │     │           │
-│  Client  ├────►│ CartService ├────►│ OrderService├────►│BillingService───►│ Database  │
-│          │     │             │     │             │     │            │     │           │
-└──────────┘     └─────────────┘     └─────────────┘     └────────────┘     └───────────┘
-      │                                                                            ▲
-      │                                                                            │
-      │                                                                            │
-      └────────────────────────────────────────────────────────────────────────────┘
-                          Order confirmation and details
-```
+## Authentication and Authorization Process
+![Authentication and Authorization Process](https://i.postimg.cc/7hVPX1Sc/Authentication-Authorization-Process02.png)
 
 ### 3. Food Management Flow
-
-```
-┌───────────┐     ┌──────────────┐     ┌────────────┐     ┌───────────┐
-│           │     │              │     │            │     │           │
-│  Admin    ├────►│FoodController├────►│FoodService ├────►│ Database  │
-│           │     │              │     │            │     │           │
-└───────────┘     └──────────────┘     └────────────┘     └───────────┘
-                          │                                      ▲
-                          │                                      │
-                          │                                      │
-┌───────────┐             │                                      │
-│           │             │                                      │
-│  Customer ◄─────────────┴──────────────────────────────────────┘
-│           │                   Food catalog view
-└───────────┘
-```
+![Food Management Flow](https://i.postimg.cc/KvG8jV2y/Food-Management-Flow.png)
 
 ### 4. User Registration Flow
-
-```
-┌──────────┐     ┌────────────────┐     ┌─────────────┐     ┌───────────┐
-│          │     │                │     │             │     │           │
-│  Client  ├────►│UserController  ├────►│ UserService ├────►│ Repository│
-│          │     │/register       │     │             │     │           │
-└──────────┘     └────────────────┘     └─────────────┘     └───────────┘
-      │                 ▲                      │                  ▲
-      │                 │                      │                  │
-      │                 │                      │                  │
-      │                 └──────────────────────┘                  │
-      │                   Validation results                      │
-      │                                                          │
-      └──────────────────────────────────────────────────────────┘
-                         Confirmation
-```
+![User-Registration-Flow](https://i.postimg.cc/xdz0BVKL/User-Registration-Flow.png)
 
 ### 5. Cart Operations Flow
-
-```
-┌──────────┐     ┌────────────────┐     ┌─────────────┐     ┌───────────┐
-│          │     │                │     │             │     │           │
-│  Client  ├────►│CartController  ├────►│ CartService ├────►│ Repository│
-│          │     │                │     │             │     │           │
-└──────────┘     └────────────────┘     └─────────────┘     └───────────┘
-      ▲                                       │                  ▲
-      │                                       │                  │
-      │                                       │                  │
-      └───────────────────────────────────────┴──────────────────┘
-                   Updated Cart Response
-```
+![Cart Operations Flow](https://i.postimg.cc/L5R6zQgL/Cart-Operations-Flow.png)
 
 ## Security Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      HTTP Request                           │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      CORS Filter                            │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  JWT Authentication Filter                  │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│               Spring Security Config                        │
-├─────────────────────────────────────────────────────────────┤
-│  Role-based URL Authorization │ Method Security             │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   Protected Resources                       │
-└─────────────────────────────────────────────────────────────┘
-```
+![Security Architecture](https://i.postimg.cc/XYhj2YyV/Security-Architecture.png)
 
 ## Database Schema
 
@@ -365,78 +270,11 @@ The Zaikabox API is built using a layered architecture pattern with Spring Boot,
                                 └───────────────────────┘
 ```
 
-## Technology Stack
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      Zaikabox API                           │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌─────────────────┐   ┌─────────────────┐   ┌────────────┐ │
-│  │                 │   │                 │   │            │ │
-│  │   Spring Boot   │   │    MongoDB      │   │  JWT Auth  │ │
-│  │                 │   │                 │   │            │ │
-│  └─────────────────┘   └─────────────────┘   └────────────┘ │
-│                                                             │
-│  ┌─────────────────┐   ┌─────────────────┐   ┌────────────┐ │
-│  │                 │   │                 │   │            │ │
-│  │   Spring MVC    │   │ Spring Security │   │   Docker   │ │
-│  │                 │   │                 │   │            │ │
-│  └─────────────────┘   └─────────────────┘   └────────────┘ │
-│                                                             │
-│  ┌─────────────────┐   ┌─────────────────┐   ┌────────────┐ │
-│  │                 │   │                 │   │            │ │
-│  │  Spring Data    │   │    OpenAPI      │   │   Azure    │ │
-│  │                 │   │                 │   │            │ │
-│  └─────────────────┘   └─────────────────┘   └────────────┘ │
-│                                                             │
-│  ┌─────────────────┐   ┌─────────────────┐   ┌────────────┐ │
-│  │                 │   │                 │   │            │ │
-│  │   Lombok        │   │ Gemini AI       │   │  PDF Gen   │ │
-│  │                 │   │                 │   │            │ │
-│  └─────────────────┘   └─────────────────┘   └────────────┘ │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
 ## API Request-Response Flow
-
-```
-┌───────────┐     ┌────────────────┐     ┌─────────────┐     ┌───────────┐
-│           │     │                │     │             │     │           │
-│  Client   │────►│  Controller    │────►│   Service   │────►│Repository │
-│           │     │                │     │             │     │           │
-└───────────┘     └────────────────┘     └─────────────┘     └───────────┘
-      ▲                    ▲                    │                  │
-      │                    │                    │                  │
-      │      Response      │                    │                  │
-      │      (JSON)        │                    │                  │
-      │                    │                    │                  │
-      └────────────────────┘◄───────────────────┴──────────────────┘
-```
+![API Request-Response Flow](https://i.postimg.cc/DZ1w4307/API-Request-Response-Flow.png)
 
 ## Deployment Architecture
-
-```
-┌───────────────────────────────────────────────────────────────┐
-│                     Azure Cloud Platform                      │
-│                                                               │
-│   ┌─────────────────┐      ┌─────────────────────────────┐    │
-│   │                 │      │                             │    │
-│   │   API Gateway   │─────►│   Zaikabox API Container    │    │
-│   │                 │      │                             │    │
-│   └─────────────────┘      └─────────────────┬───────────┘    │
-│                                              │                │
-│                                              │                │
-│                                              ▼                │
-│                            ┌─────────────────────────────┐    │
-│                            │                             │    │
-│                            │      MongoDB Database       │    │
-│                            │                             │    │
-│                            └─────────────────────────────┘    │
-│                                                               │
-└───────────────────────────────────────────────────────────────┘
-```
+![Deployment Architecture](https://i.postimg.cc/HW4LpmF2/Deployment-Architecture.png)
 
 ## Integration Architecture
 
@@ -453,20 +291,3 @@ The Zaikabox API is built using a layered architecture pattern with Spring Boot,
 └───────────────┘  └────────────┘  └──────────────┘  └─────────┘
 ```
 
-## Authentication and Authorization Process
-
-```
-┌─────────┐     ┌──────────────┐     ┌───────────────┐
-│         │     │              │     │               │
-│ Client  │────►│ Authenticate ├────►│ Generate JWT  │
-│         │     │              │     │               │
-└─────────┘     └──────────────┘     └───────┬───────┘
-                                             │
-                                             │
-                                             ▼
-┌─────────────────┐     ┌──────────────┐    ┌───────────────┐
-│                 │     │              │    │               │
-│ Access Resource │◄────┤ Validate JWT │◄───┤ Store JWT     │
-│                 │     │              │    │               │
-└─────────────────┘     └──────────────┘    └───────────────┘
-```
