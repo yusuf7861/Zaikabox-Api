@@ -12,6 +12,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,18 +20,20 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import tech.realworks.yusuf.zaikabox.entity.UserEntity;
 import tech.realworks.yusuf.zaikabox.io.ErrorsResponse;
-import tech.realworks.yusuf.zaikabox.io.user.ResetPasswordRequest;
-import tech.realworks.yusuf.zaikabox.io.user.SendResetOtpRequest;
-import tech.realworks.yusuf.zaikabox.io.user.VerifyOtpRequest;
+import tech.realworks.yusuf.zaikabox.io.user.AdminResetPasswordRequest;
 import tech.realworks.yusuf.zaikabox.io.user.AuthenticationRequest;
 import tech.realworks.yusuf.zaikabox.io.user.AuthenticationResponse;
+import tech.realworks.yusuf.zaikabox.io.user.SendResetOtpRequest;
+import tech.realworks.yusuf.zaikabox.io.user.VerifyAdminOtpRequest;
 import tech.realworks.yusuf.zaikabox.io.user.UserRequest;
 import tech.realworks.yusuf.zaikabox.io.user.UserResponse;
 import tech.realworks.yusuf.zaikabox.repository.userRepo.UserRepository;
 import tech.realworks.yusuf.zaikabox.service.AuditService;
+import tech.realworks.yusuf.zaikabox.service.userservice.AdminPasswordResetService;
 import tech.realworks.yusuf.zaikabox.service.userservice.AppUserDetailsService;
 import tech.realworks.yusuf.zaikabox.service.userservice.UserService;
 import tech.realworks.yusuf.zaikabox.util.JwtUtil;
@@ -54,6 +57,7 @@ public class UserController {
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
     private final AuditService auditService;
+    private final AdminPasswordResetService adminPasswordResetService;
 
     @Operation(summary = "Register a new user", description = "Registers a new user account.")
     @ApiResponses(value = {
@@ -227,80 +231,69 @@ public class UserController {
         }
     }
 
-    @Operation(summary = "Send password reset OTP", description = "Sends a password reset OTP to the user's email.")
+    @Operation(summary = "Send admin password reset OTP", description = "Generates a 6-digit OTP for admin accounts and emails it.")
     @ApiResponse(responseCode = "200", description = "OTP sent successfully")
-    @PostMapping("/send-reset-otp")
-    public ResponseEntity<?> sendResetPasswordOTP(@RequestBody SendResetOtpRequest request) {
+    @PostMapping("/send-otp")
+    public ResponseEntity<?> sendAdminPasswordResetOtp(@Valid @RequestBody SendResetOtpRequest request) {
+        String email = request.getEmail();
         try {
-            String email = request.getEmail();
-            String token = userService.sendPasswordResetEmail(email);
-
-            // Log password reset OTP sent event
+            adminPasswordResetService.sendOtp(email);
             Optional<UserEntity> userOpt = userRepository.findByEmail(email);
-            String userId = userOpt.isPresent() ? userOpt.get().getId() : null;
-            auditService.logPasswordResetEvent(userId, email, true, "Password reset OTP sent");
-
-            return ResponseEntity.ok(Map.of("token", token, "message", "OTP sent successfully"));
+            String userId = userOpt.map(UserEntity::getId).orElse(null);
+            auditService.logPasswordResetEvent(userId, email, true, "Admin password reset OTP sent");
+            return ResponseEntity.ok(Map.of("message", "OTP sent to your email"));
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
-            // Log failed attempt to send password reset OTP
-            auditService.logPasswordResetEvent(null, request.getEmail(), false, "Failed to send OTP: " + e.getMessage());
-            throw new RuntimeException(e);
+            auditService.logPasswordResetEvent(null, email, false, "Failed to send OTP: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Failed to send OTP"));
         }
     }
 
-    @Operation(summary = "Verify OTP", description = "Verifies the OTP for password reset.")
+    @Operation(summary = "Verify admin password reset OTP", description = "Verifies the OTP for admin password reset.")
     @ApiResponse(responseCode = "200", description = "OTP verified successfully")
     @PostMapping("/verify-otp")
-    public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
+    public ResponseEntity<?> verifyAdminOtp(@Valid @RequestBody VerifyAdminOtpRequest request) {
+        String email = request.getEmail();
         try {
-            String token = request.getToken();
-            String otp = request.getOtp();
-            boolean valid = userService.verifyOtp(token, otp);
-
-            // Extract email from token (using the correct method name)
-            String email = jwtUtil.extractEmail(token);
+            adminPasswordResetService.verifyOtp(email, request.getOtp());
             Optional<UserEntity> userOpt = userRepository.findByEmail(email);
-            String userId = userOpt.isPresent() ? userOpt.get().getId() : null;
-
-            if (valid) {
-                // Log successful OTP verification
-                auditService.logPasswordResetEvent(userId, email, true, "OTP verified successfully");
-                return ResponseEntity.ok(Map.of("message", "OTP verified successfully"));
-            } else {
-                // Log failed OTP verification
-                auditService.logPasswordResetEvent(userId, email, false, "Invalid OTP provided");
-                return ResponseEntity.badRequest().body(Map.of("message", "Invalid OTP"));
-            }
+            String userId = userOpt.map(UserEntity::getId).orElse(null);
+            auditService.logPasswordResetEvent(userId, email, true, "OTP verified");
+            return ResponseEntity.ok(Map.of("message", "OTP Verified"));
+        } catch (IllegalArgumentException e) {
+            auditService.logPasswordResetEvent(null, email, false, "OTP verification failed: " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
-            // Log error during OTP verification
-            auditService.logPasswordResetEvent(null, "unknown", false, "Error during OTP verification: " + e.getMessage());
-            throw new RuntimeException(e);
+            auditService.logPasswordResetEvent(null, email, false, "OTP verification failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "OTP verification failed"));
         }
     }
 
-    @Operation(summary = "Reset password", description = "Resets the user's password using a valid OTP token.")
-    @ApiResponse(responseCode = "200", description = "Password reset successfully")
+    @Operation(summary = "Reset admin password", description = "Resets the admin user's password after OTP verification.")
+    @ApiResponse(responseCode = "200", description = "Password updated successfully")
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+    public ResponseEntity<?> resetAdminPassword(@Valid @RequestBody AdminResetPasswordRequest request) {
+        String email = request.getEmail();
         try {
-            String token = request.getToken();
-            String password = request.getPassword();
-
-            // Extract email from token using the correct method name
-            String email = jwtUtil.extractEmail(token);
+            adminPasswordResetService.resetPassword(email, request.getOtp(), request.getNewPassword());
             Optional<UserEntity> userOpt = userRepository.findByEmail(email);
-            String userId = userOpt.isPresent() ? userOpt.get().getId() : null;
-
-            userService.resetPassword(token, password);
-
-            // Log successful password reset
-            auditService.logPasswordResetEvent(userId, email, true, "Password reset successfully");
-
-            return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
+            String userId = userOpt.map(UserEntity::getId).orElse(null);
+            auditService.logPasswordResetEvent(userId, email, true, "Password updated via admin reset");
+            return ResponseEntity.ok(Map.of("message", "Password updated successfully"));
+        } catch (IllegalArgumentException e) {
+            auditService.logPasswordResetEvent(null, email, false, "Password reset failed: " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (AccessDeniedException e) {
+            auditService.logPasswordResetEvent(null, email, false, "Password reset failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", e.getMessage()));
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
-            // Log failed password reset
-            auditService.logPasswordResetEvent(null, "unknown", false, "Password reset failed: " + e.getMessage());
-            throw new RuntimeException(e);
+            auditService.logPasswordResetEvent(null, email, false, "Password reset failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Password reset failed"));
         }
     }
 }
