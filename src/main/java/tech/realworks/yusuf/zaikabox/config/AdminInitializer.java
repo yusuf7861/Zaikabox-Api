@@ -27,24 +27,28 @@ public class AdminInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        boolean adminExists = userRepository.existsByRole(Role.ADMIN);
-
-        if (adminExists) {
+        if (userRepository.existsByRole(Role.ADMIN)) {
             log.info("Root Admin found, Skipping the creation part of Root Admin.");
+            return;
         }
 
-        if (!adminExists) {
-            log.info("Root Admin not found. Creating a new one");
-            String password = generateRandomPassword(8);
+        log.info("Root Admin not found. Creating a new one");
+        String password = generateStrongPassword();
+
+        UserEntity rootAdmin = new UserEntity();
+        rootAdmin.setEmail("yjamalk@zohomail.in");
+        rootAdmin.setPassword(passwordEncoder.encode(password));
+        rootAdmin.setRole(Role.ADMIN);
+
+        userRepository.save(rootAdmin);
+
+        try {
             sendContactUsEmail(password);
-
-            UserEntity rootAdmin = new UserEntity();
-            rootAdmin.setEmail("yjamalk@zohomail.in");
-            rootAdmin.setPassword(passwordEncoder.encode(password));
-            rootAdmin.setRole(Role.ADMIN);
-            userRepository.save(rootAdmin);
-            log.info("Root Admin created successfully");
+        } catch (Exception e) {
+            log.error("Failed to send email notification for Root Admin creation", e);
         }
+
+        log.info("Root Admin created successfully");
     }
 
     public void sendContactUsEmail(String password) {
@@ -61,13 +65,31 @@ public class AdminInitializer implements CommandLineRunner {
         javaMailSender.send(simpleMailSender);
     }
 
-    public static String generateRandomPassword(int length) {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    public static String generateStrongPassword() {
+        String upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String lower = "abcdefghijklmnopqrstuvwxyz";
+        String digits = "0123456789";
+        String special = "@$!%*?&";
+
         SecureRandom random = new SecureRandom();
-        StringBuilder sb = new StringBuilder(length);
-        for (int i = 0; i < length; i++) {
-            sb.append(chars.charAt(random.nextInt(chars.length())));
+        StringBuilder password = new StringBuilder();
+
+        password.append(upper.charAt(random.nextInt(upper.length())));
+        password.append(lower.charAt(random.nextInt(lower.length())));
+        password.append(digits.charAt(random.nextInt(digits.length())));
+        password.append(special.charAt(random.nextInt(special.length())));
+
+        String all = upper + lower + digits + special;
+        for (int i = 4; i < 10; i++) {
+            password.append(all.charAt(random.nextInt(all.length())));
         }
-        return sb.toString();
+
+        // shuffle
+        return password.chars()
+                .mapToObj(c -> (char) c)
+                .sorted((a, b) -> random.nextInt(3) - 1)
+                .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append)
+                .toString();
     }
+
 }
