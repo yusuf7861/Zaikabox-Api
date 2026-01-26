@@ -241,11 +241,11 @@ public class UserController {
             Optional<UserEntity> userOpt = userRepository.findByEmail(email);
             String userId = userOpt.map(UserEntity::getId).orElse(null);
             auditService.logPasswordResetEvent(userId, email, true, "Admin password reset OTP sent");
-            return ResponseEntity.ok(Map.of("message", "OTP sent to your email"));
-        } catch (UsernameNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
-        } catch (AccessDeniedException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", e.getMessage()));
+            return ResponseEntity.ok(Map.of("message", "If the account exists and is eligible, an OTP has been sent"));
+        } catch (UsernameNotFoundException | AccessDeniedException e) {
+            // Do not reveal whether the account exists or has admin role; log only internally.
+            auditService.logPasswordResetEvent(null, email, false, "Failed to send OTP");
+            return ResponseEntity.ok(Map.of("message", "If the account exists and is eligible, an OTP has been sent"));
         } catch (Exception e) {
             auditService.logPasswordResetEvent(null, email, false, "Failed to send OTP: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Failed to send OTP"));
