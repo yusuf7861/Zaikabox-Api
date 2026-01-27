@@ -106,7 +106,12 @@ public class AdminPasswordResetService {
     }
 
     private void recordFailedAttempt(AdminPasswordResetToken token) {
-        token.setAttempts(token.getAttempts() + 1);
+        int newAttempts = token.getAttempts() + 1;
+        token.setAttempts(newAttempts);
+        if (newAttempts >= MAX_ATTEMPTS) {
+            tokenRepository.deleteByEmail(token.getEmail());
+            throw new IllegalArgumentException("OTP locked due to too many attempts");
+        }
         tokenRepository.save(token);
     }
 
