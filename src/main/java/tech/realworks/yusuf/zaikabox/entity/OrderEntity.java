@@ -35,4 +35,7 @@ public class OrderEntity {
     private BillingDetails billingDetails;
     private String razorpayOrderId;
     private String paymentStatus;
+    private String razorpayPaymentId;
+    private String razorpaySignature;
+    private LocalDateTime paymentDate;
 }

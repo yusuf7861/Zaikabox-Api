@@ -7,6 +7,7 @@ import tech.realworks.yusuf.zaikabox.entity.OrderEntity;
 import tech.realworks.yusuf.zaikabox.entity.Status;
 import tech.realworks.yusuf.zaikabox.repository.OrderRepository;
 
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
@@ -31,7 +32,9 @@ public class OrderImpl implements OrderService{
 
     @Override
     public Status getStatusOfOrder(String orderId) {
-        return null;
+        return orderRepository.findByOrderId(orderId)
+                .map(OrderEntity::getStatus)
+                .orElseThrow(() -> new NoSuchElementException("Order not found: " + orderId));
     }
 
     @Override
