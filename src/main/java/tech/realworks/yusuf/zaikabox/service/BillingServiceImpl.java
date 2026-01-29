@@ -22,6 +22,7 @@ import tech.realworks.yusuf.zaikabox.repository.CartRepository;
 import tech.realworks.yusuf.zaikabox.repository.FoodRepository;
 import tech.realworks.yusuf.zaikabox.repository.OrderRepository;
 import tech.realworks.yusuf.zaikabox.service.userservice.UserService;
+import tech.realworks.yusuf.zaikabox.util.OrderNotificationPublisher;
 
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
@@ -40,6 +41,7 @@ public class BillingServiceImpl implements BillingService {
     private final UserService userService;
     private final CartService cartService;
     private final RazorpayClient client;
+    private final OrderNotificationPublisher orderNotificationPublisher;
 
     @Value("${razorpay.currency}")
     private String razorPayCurrency;
@@ -107,6 +109,9 @@ public class BillingServiceImpl implements BillingService {
         orderEntity.setPaymentStatus(razorPayOrder.get("status"));
 
         orderEntity = orderRepository.save(orderEntity);
+
+        // Realtime admin notification: a new order has been created (PENDING until payment verification)
+        orderNotificationPublisher.notifyAdminNewOrder(orderEntity);
 
         return convertToResponse(orderEntity);
     }
@@ -650,3 +655,4 @@ public class BillingServiceImpl implements BillingService {
         throw new NoSuchElementException("Order not found for verification");
     }
 }
+
