@@ -21,7 +21,8 @@ public interface OrderRepository extends MongoRepository<OrderEntity, String> {
      * @return Optional containing the order if found
      */
     Optional<OrderEntity> findByOrderId(String orderId);
-    
+    Optional<OrderEntity> findByRazorpayOrderId(String razorpayOrderId);
+
     /**
      * Find all orders for a specific customer
      * @param customerId The customer ID

@@ -27,6 +27,10 @@ public class OrderResponse {
     private String paymentMode; // Payment mode (e.g., UPI, CARD, COD)
     private LocalDateTime orderDate; // Date and time when the order was placed
     private String status; // Order status (e.g., PENDING, CONFIRMED, DELIVERED)
+    private String razorpayOrderId;
+    private String razorpayPaymentId;
+    private String paymentStatus;
+    private LocalDateTime paymentDate;
 
     // Billing details
     private String firstName;

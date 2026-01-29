@@ -1,7 +1,6 @@
 package tech.realworks.yusuf.zaikabox.controller;
 
 import com.razorpay.RazorpayException;
-import com.razorpay.Utils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -9,8 +8,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -40,9 +37,6 @@ public class BillingController {
     private final BillingService billingService;
     private final OrderService orderService;
 
-    @Value("${razorpay.secret.key}")
-    private String RAZORPAY_SECRET;
-
     @Operation(summary = "Create a new order", description = "Creates a new order and returns the order details.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Order created successfully", content = @Content(schema = @Schema(implementation = OrderResponse.class))),
@@ -60,24 +54,8 @@ public class BillingController {
             @ApiResponse(responseCode = "500", description = "Verification failed")
     })
     @PostMapping("/verify-payment")
-    public ResponseEntity<String> verifyPayment(@RequestBody RazorpayPaymentVerificationDTO dto) {
-        try {
-            JSONObject options = new JSONObject();
-            options.put("razorpay_order_id", dto.getRazorpayOrderId());
-            options.put("razorpay_payment_id", dto.getRazorpayPaymentId());
-            options.put("razorpay_signature", dto.getRazorpaySignature());
-
-            boolean isValid = Utils.verifyPaymentSignature(options, RAZORPAY_SECRET);
-
-            if (isValid) {
-                return ResponseEntity.ok("Payment verified successfully");
-            } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid payment signature");
-            }
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Verification failed: " + e.getMessage());
-        }
+    public ResponseEntity<OrderResponse> verifyPayment(@RequestBody RazorpayPaymentVerificationDTO dto) {
+        return ResponseEntity.ok(billingService.verifyPayment(dto));
     }
 
     @Operation(summary = "Get order by ID", description = "Retrieves an order by its ID.")
@@ -160,5 +138,15 @@ public class BillingController {
     @PutMapping("/{orderId}")
     public void updateOrderStatus(@PathVariable String orderId, Status status) {
         orderService.changeStatusOfOrder(orderId, status);
+    }
+
+    @Operation(summary = "Track order", description = "Tracks the status of an order by its ID.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Order tracked successfully", content = @Content(schema = @Schema(implementation = OrderResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Order not found")
+    })
+    @GetMapping("/{orderId}/track")
+    public ResponseEntity<OrderResponse> trackOrder(@PathVariable String orderId) {
+        return ResponseEntity.ok(billingService.trackOrder(orderId));
     }
 }

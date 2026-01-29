@@ -1,5 +1,6 @@
 package tech.realworks.yusuf.zaikabox.service;
 
+import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,9 @@ class BillingServiceImplTest {
 
     @Mock
     private CartService cartService;
+
+    @Mock
+    private RazorpayClient razorpayClient;
 
     @InjectMocks
     private BillingServiceImpl billingService;
@@ -84,7 +88,7 @@ class BillingServiceImplTest {
 //        cartItems.put(FOOD_ID_2, 2); // 2 Butter Naan
 //
 //        CartEntity cartEntity = new CartEntity(USER_ID, cartItems);
-//        when(cartRepository.findByUserId(USER_ID)).thenReturn(Optional.of(cartEntity));
+//        when(cartRepository.findByUserId(USER_ID)).thenReturn(List.of(cartEntity));
 //
 //        OrderRequest orderRequest = OrderRequest.builder()
 //                .useCart(true)

@@ -291,3 +291,44 @@ The Zaikabox API is built using a layered architecture pattern with Spring Boot,
 └───────────────┘  └────────────┘  └──────────────┘  └─────────┘
 ```
 
+## Razorpay Payment & Order APIs (new)
+
+- **Flow overview**: (1) Auth user calls `POST /api/v1/orders` to get `razorpay_order_id` + amount; (2) Frontend opens Razorpay Checkout with that order id and collects `razorpay_payment_id` and `razorpay_signature`; (3) Frontend calls `POST /api/v1/orders/verify-payment` to mark the order paid; (4) User views/tracks via GET endpoints below.
+- **Auth**: All order endpoints require JWT except `/api/v1/orders/verify-payment` (open for Razorpay callback from frontend). Admin-only routes are unchanged (`DELETE /api/v1/orders/{orderId}`, `PUT /api/v1/orders/{orderId}`).
+
+### Create order
+- `POST /api/v1/orders`
+- Body:
+  ```json
+  {
+    "paymentMode": "UPI|CARD|COD",
+    "useCart": true,
+    "items": [{"foodId": "string", "quantity": 2}],
+    "billingDetails": {"firstName": "", "lastName": "", "email": "", "address": "", "locality": "", "landmark": "", "zip": "", "country": "", "state": ""}
+  }
+  ```
+- Response: order with `orderId`, totals, `status` (PENDING), `razorpayOrderId`, `paymentStatus`, item lines, billing fields.
+
+### Verify payment (Razorpay)
+- `POST /api/v1/orders/verify-payment`
+- Body:
+  ```json
+  {
+    "razorpayPaymentId": "pay_xxx",
+    "razorpayOrderId": "order_xxx",
+    "razorpaySignature": "signature",
+    "orderId": "FD..." // optional helper
+  }
+  ```
+- Response: updated order with `status`=PAID, `paymentStatus`="paid", `razorpayPaymentId`, `paymentDate`.
+
+### Track / fetch orders (JWT)
+- `GET /api/v1/orders` → list current user orders.
+- `GET /api/v1/orders/{orderId}` → order detail.
+- `GET /api/v1/orders/{orderId}/track` → same as detail for tracking.
+- `GET /api/v1/orders/status/{status}` → filter by `PENDING|PROCESSING|PAID|DELIVERED|CANCELLED`.
+
+### Order schema (response keys)
+- Core: `orderId`, `customerId`, `items[{name,quantity,unitPrice,total}]`, `subTotal`, `gstRate`, `gstAmount`, `totalAmountWithGST`, `paymentMode`, `orderDate`, `status`.
+- Payment: `razorpayOrderId`, `razorpayPaymentId`, `paymentStatus`, `paymentDate`.
+- Billing: `firstName`, `lastName`, `email`, `address`, `locality`, `landmark`, `zip`, `country`, `state`.

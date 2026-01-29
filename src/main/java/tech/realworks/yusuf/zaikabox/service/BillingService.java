@@ -4,6 +4,7 @@ import com.razorpay.RazorpayException;
 import tech.realworks.yusuf.zaikabox.entity.Status;
 import tech.realworks.yusuf.zaikabox.io.OrderRequest;
 import tech.realworks.yusuf.zaikabox.io.OrderResponse;
+import tech.realworks.yusuf.zaikabox.io.RazorpayPaymentVerificationDTO;
 
 import java.util.List;
 
@@ -38,6 +39,16 @@ public interface BillingService {
      * @return List of order responses
      */
     List<OrderResponse> getOrdersByStatus(Status status);
+
+    /**
+     * Verify a Razorpay payment and persist the result.
+     */
+    OrderResponse verifyPayment(RazorpayPaymentVerificationDTO dto);
+
+    /**
+     * Track an order by ID for the current user.
+     */
+    OrderResponse trackOrder(String orderId);
 
     /**
      * Generate a unique order ID

@@ -25,6 +25,7 @@ import tech.realworks.yusuf.zaikabox.io.user.AuthenticationRequest;
 import tech.realworks.yusuf.zaikabox.io.user.AuthenticationResponse;
 import tech.realworks.yusuf.zaikabox.io.user.UserRequest;
 import tech.realworks.yusuf.zaikabox.io.user.UserResponse;
+import tech.realworks.yusuf.zaikabox.io.user.*;
 import tech.realworks.yusuf.zaikabox.repository.userRepo.UserRepository;
 import tech.realworks.yusuf.zaikabox.service.AuditService;
 import tech.realworks.yusuf.zaikabox.service.userservice.AppUserDetailsService;
@@ -150,5 +151,57 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(response);
+    }
+
+    @Operation(summary = "Forgot Password", description = "Initiates password reset by sending an OTP to the email.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OTP sent successfully"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody SendResetOtpRequest request) {
+        try {
+            String token = userService.sendPasswordResetEmail(request.getEmail());
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "OTP sent to email");
+            response.put("token", token);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorsResponse(e.getMessage(), HttpStatus.BAD_REQUEST));
+        }
+    }
+
+    @Operation(summary = "Verify OTP", description = "Verifies the OTP sent to the user.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OTP verified successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid OTP")
+    })
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
+        try {
+            boolean isValid = userService.verifyOtp(request.getToken(), request.getOtp());
+            if (isValid) {
+                return ResponseEntity.ok(Map.of("message", "OTP Verified"));
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorsResponse("Invalid OTP", HttpStatus.BAD_REQUEST));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorsResponse(e.getMessage(), HttpStatus.BAD_REQUEST));
+        }
+    }
+
+    @Operation(summary = "Reset Password", description = "Resets the user's password.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Password reset successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request")
+    })
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        try {
+            userService.resetPassword(request.getToken(), request.getPassword());
+            return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorsResponse(e.getMessage(), HttpStatus.BAD_REQUEST));
+        }
     }
 }

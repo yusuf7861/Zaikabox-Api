@@ -7,6 +7,7 @@ import com.lowagie.text.pdf.PdfWriter;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
+import com.razorpay.Utils;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +17,7 @@ import tech.realworks.yusuf.zaikabox.io.OrderItemRequest;
 import tech.realworks.yusuf.zaikabox.io.OrderItemResponse;
 import tech.realworks.yusuf.zaikabox.io.OrderRequest;
 import tech.realworks.yusuf.zaikabox.io.OrderResponse;
+import tech.realworks.yusuf.zaikabox.io.RazorpayPaymentVerificationDTO;
 import tech.realworks.yusuf.zaikabox.repository.CartRepository;
 import tech.realworks.yusuf.zaikabox.repository.FoodRepository;
 import tech.realworks.yusuf.zaikabox.repository.OrderRepository;
@@ -44,6 +46,9 @@ public class BillingServiceImpl implements BillingService {
 
     @Value("${razorpay.company-name}")
     private String companyName;
+
+    @Value("${razorpay.secret.key}")
+    private String razorPaySecret;
 
     // Default GST rate (5%)
     private static final double DEFAULT_GST_RATE = 5.0;
@@ -146,12 +151,16 @@ public class BillingServiceImpl implements BillingService {
      * @return List of order items
      */
     private List<OrderItemEntity> getOrderItemsFromCart(String customerId) {
-        Optional<CartEntity> cartOptional = cartRepository.findByUserId(customerId);
-        if (cartOptional.isEmpty() || cartOptional.get().getCartItems().isEmpty()) {
+        List<CartEntity> carts = cartRepository.findByUserId(customerId);
+        if (carts.isEmpty()) {
             throw new IllegalStateException("Cart is empty");
         }
 
-        CartEntity cart = cartOptional.get();
+        CartEntity cart = carts.get(0);
+        if (cart.getCartItems() == null || cart.getCartItems().isEmpty()) {
+            throw new IllegalStateException("Cart is empty");
+        }
+
         List<OrderItemEntity> orderItems = new ArrayList<>();
 
         for (Map.Entry<String, Integer> entry : cart.getCartItems().entrySet()) {
@@ -255,6 +264,10 @@ public class BillingServiceImpl implements BillingService {
                 .paymentMode(orderEntity.getPaymentMode())
                 .orderDate(orderEntity.getOrderDate())
                 .status(String.valueOf(orderEntity.getStatus()))
+                .razorpayOrderId(orderEntity.getRazorpayOrderId())
+                .razorpayPaymentId(orderEntity.getRazorpayPaymentId())
+                .paymentStatus(orderEntity.getPaymentStatus())
+                .paymentDate(orderEntity.getPaymentDate())
                 .build();
 
         // Add billing details if available
@@ -586,5 +599,54 @@ public class BillingServiceImpl implements BillingService {
             return str;
         }
         return str.substring(0, maxLength - 3) + "...";
+    }
+
+    @Override
+    public OrderResponse verifyPayment(RazorpayPaymentVerificationDTO dto) {
+        JSONObject options = new JSONObject();
+        options.put("razorpay_order_id", dto.getRazorpayOrderId());
+        options.put("razorpay_payment_id", dto.getRazorpayPaymentId());
+        options.put("razorpay_signature", dto.getRazorpaySignature());
+
+        boolean isValid;
+        try {
+            isValid = Utils.verifyPaymentSignature(options, razorPaySecret);
+        } catch (RazorpayException e) {
+            throw new RuntimeException("Payment verification failed", e);
+        }
+
+        if (!isValid) {
+            throw new IllegalArgumentException("Invalid payment signature");
+        }
+
+        OrderEntity order = locateOrder(dto);
+        order.setRazorpayPaymentId(dto.getRazorpayPaymentId());
+        order.setRazorpaySignature(dto.getRazorpaySignature());
+        order.setPaymentStatus("paid");
+        order.setPaymentDate(LocalDateTime.now());
+        order.setStatus(Status.PAID);
+        order = orderRepository.save(order);
+        return convertToResponse(order);
+    }
+
+    @Override
+    public OrderResponse trackOrder(String orderId) {
+        return getOrder(orderId);
+    }
+
+    private OrderEntity locateOrder(RazorpayPaymentVerificationDTO dto) {
+        if (dto.getRazorpayOrderId() != null) {
+            Optional<OrderEntity> byRazorpay = orderRepository.findByRazorpayOrderId(dto.getRazorpayOrderId());
+            if (byRazorpay.isPresent()) {
+                return byRazorpay.get();
+            }
+        }
+        if (dto.getOrderId() != null) {
+            Optional<OrderEntity> byOrderId = orderRepository.findByOrderId(dto.getOrderId());
+            if (byOrderId.isPresent()) {
+                return byOrderId.get();
+            }
+        }
+        throw new NoSuchElementException("Order not found for verification");
     }
 }

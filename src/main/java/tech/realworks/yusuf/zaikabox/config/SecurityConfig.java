@@ -51,9 +51,10 @@ public class SecurityConfig {
                                 .requestMatchers(
                                         "/api/v1/users/register", 
                                         "/api/v1/users/login",
-                                        "api/v1/auth/*",
+                                        "/api/v1/auth/**",
                                         "/api/v1/users/is-authenticated",
                                         "/api/v1/users/logout",
+                                        "/api/v1/admin/users/send-otp",
                                         "/api/v1/foods/**",
                                         "/contact-us",
                                         "/send-reset-otp", 
@@ -66,7 +67,9 @@ public class SecurityConfig {
                                         "/api/v1/users/send-reset-otp",
                                         "/api/v1/users/verify-otp",
                                         "/api/v1/users/reset-password",
-                                        "/api/v1/users/send-otp"
+                                        "/api/v1/users/send-otp",
+                                        "/api/v1/orders/verify-payment",
+                                        "/api/v1/payment/verify"
                                 ).permitAll()
                                 // Admin-only endpoints
                                 .requestMatchers(

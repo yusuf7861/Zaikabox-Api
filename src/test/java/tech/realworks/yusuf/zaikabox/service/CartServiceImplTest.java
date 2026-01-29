@@ -13,7 +13,9 @@ import tech.realworks.yusuf.zaikabox.repository.CartRepository;
 import tech.realworks.yusuf.zaikabox.repository.userRepo.UserRepository;
 import tech.realworks.yusuf.zaikabox.service.userservice.UserService;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -63,7 +65,7 @@ class CartServiceImplTest {
     @Test
     void addToCart_WhenCartExists_ShouldAddItemAndReturnUpdatedCart() {
         // Arrange
-        when(cartRepository.findByUserId(userId)).thenReturn(Optional.of(cartEntity));
+        when(cartRepository.findByUserId(userId)).thenReturn(List.of(cartEntity));
         when(cartRepository.save(any(CartEntity.class))).thenReturn(cartEntity);
 
         // Act
@@ -81,7 +83,7 @@ class CartServiceImplTest {
     @Test
     void addToCart_WhenCartDoesNotExist_ShouldCreateCartAddItemAndReturnCart() {
         // Arrange
-        when(cartRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        when(cartRepository.findByUserId(userId)).thenReturn(Collections.emptyList());
         when(cartRepository.save(any(CartEntity.class))).thenReturn(cartEntity);
 
         // Act
@@ -99,7 +101,7 @@ class CartServiceImplTest {
     @Test
     void getCart_WhenCartExists_ShouldReturnCart() {
         // Arrange
-        when(cartRepository.findByUserId(userId)).thenReturn(Optional.of(cartEntity));
+        when(cartRepository.findByUserId(userId)).thenReturn(List.of(cartEntity));
 
         // Act
         CartResponse response = cartService.getCart();
@@ -115,7 +117,7 @@ class CartServiceImplTest {
     @Test
     void getCart_WhenCartDoesNotExist_ShouldReturnEmptyCart() {
         // Arrange
-        when(cartRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        when(cartRepository.findByUserId(userId)).thenReturn(Collections.emptyList());
 
         // Act
         CartResponse response = cartService.getCart();
@@ -144,7 +146,7 @@ class CartServiceImplTest {
         updatedEntity.setUserId(userId);
         updatedEntity.setCartItems(updatedItems);
         
-        when(cartRepository.findByUserId(userId)).thenReturn(Optional.of(cartEntity));
+        when(cartRepository.findByUserId(userId)).thenReturn(List.of(cartEntity));
         when(cartRepository.save(any(CartEntity.class))).thenReturn(updatedEntity);
 
         // Act
@@ -162,7 +164,7 @@ class CartServiceImplTest {
     @Test
     void updateCart_WhenCartDoesNotExist_ShouldCreateCartWithItemsAndReturnCart() {
         // Arrange
-        when(cartRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        when(cartRepository.findByUserId(userId)).thenReturn(Collections.emptyList());
         when(cartRepository.save(any(CartEntity.class))).thenReturn(cartEntity);
 
         // Act
@@ -180,8 +182,8 @@ class CartServiceImplTest {
     @Test
     void removeFromCart_WhenCartExistsAndItemExists_ShouldRemoveItemAndReturnUpdatedCart() {
         // Arrange
-        when(cartRepository.findByUserId(userId)).thenReturn(Optional.of(cartEntity));
-        
+        when(cartRepository.findByUserId(userId)).thenReturn(List.of(cartEntity));
+
         CartEntity updatedEntity = new CartEntity();
         updatedEntity.setId(cartEntity.getId());
         updatedEntity.setUserId(userId);
@@ -204,7 +206,7 @@ class CartServiceImplTest {
     @Test
     void removeFromCart_WhenCartDoesNotExist_ShouldReturnEmptyCart() {
         // Arrange
-        when(cartRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        when(cartRepository.findByUserId(userId)).thenReturn(Collections.emptyList());
 
         // Act
         CartResponse response = cartService.removeFromCart(foodId);
@@ -221,8 +223,8 @@ class CartServiceImplTest {
     @Test
     void clearCart_WhenCartExists_ShouldClearCartAndReturnEmptyCart() {
         // Arrange
-        when(cartRepository.findByUserId(userId)).thenReturn(Optional.of(cartEntity));
-        
+        when(cartRepository.findByUserId(userId)).thenReturn(List.of(cartEntity));
+
         CartEntity clearedEntity = new CartEntity();
         clearedEntity.setId(cartEntity.getId());
         clearedEntity.setUserId(userId);
@@ -245,7 +247,7 @@ class CartServiceImplTest {
     @Test
     void clearCart_WhenCartDoesNotExist_ShouldReturnEmptyCart() {
         // Arrange
-        when(cartRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        when(cartRepository.findByUserId(userId)).thenReturn(Collections.emptyList());
 
         // Act
         CartResponse response = cartService.clearCart();
