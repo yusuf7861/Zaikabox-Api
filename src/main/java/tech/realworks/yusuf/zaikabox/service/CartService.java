@@ -37,4 +37,11 @@ public interface CartService {
      * @return The empty cart response
      */
     CartResponse clearCart();
+
+    /**
+     * Clears the cart for a specific user.
+     * Used by internal processes (e.g. webhook) where security context is not available.
+     * @param userId The user ID
+     */
+    void clearCart(String userId);
 }

@@ -20,7 +20,6 @@ public class CartServiceImpl implements CartService {
 
     private final CartRepository cartRepository;
     private final UserService userService;
-    private final UserRepository userRepository;
 
     @Override
     public CartResponse addToCart(String foodId) {
@@ -93,6 +92,16 @@ public class CartServiceImpl implements CartService {
             // Return an empty cart if the user doesn't have one yet
             CartEntity emptyCart = new CartEntity(loggedInUserId, new HashMap<>());
             return convertToResponse(emptyCart);
+        }
+    }
+
+                                                                                                                        @Override
+    public void clearCart(String userId) {
+        Optional<CartEntity> cartOptional = findCartByUserId(userId);
+        if (cartOptional.isPresent()) {
+            CartEntity cartEntity = cartOptional.get();
+            cartEntity.setCartItems(new HashMap<>());
+            cartRepository.save(cartEntity);
         }
     }
 

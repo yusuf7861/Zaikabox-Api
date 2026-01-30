@@ -31,4 +31,11 @@ public class PaymentController {
     public ResponseEntity<OrderResponse> verifyPayment(@RequestBody RazorpayPaymentVerificationDTO dto) {
         return ResponseEntity.ok(billingService.verifyPayment(dto));
     }
+
+    @PostMapping("/webhook")
+    @Operation(summary = "Razorpay Webhook", description = "Handles Razorpay webhook events.")
+    public ResponseEntity<Void> handleWebhook(@RequestBody String payload, @RequestHeader("X-Razorpay-Signature") String signature) {
+        billingService.processWebhook(payload, signature);
+        return ResponseEntity.ok().build();
+    }
 }

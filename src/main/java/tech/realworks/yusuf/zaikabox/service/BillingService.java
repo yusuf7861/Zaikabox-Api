@@ -69,4 +69,11 @@ public interface BillingService {
      * @return String containing the text representation of the bill
      */
     String generateTextBill(String orderId);
+
+    /**
+     * Process Razorpay Webhook
+     * @param payload Request body
+     * @param signature X-Razorpay-Signature header
+     */
+    void processWebhook(String payload, String signature);
 }

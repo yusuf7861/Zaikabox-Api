@@ -21,6 +21,7 @@ import tech.realworks.yusuf.zaikabox.io.RazorpayPaymentVerificationDTO;
 import tech.realworks.yusuf.zaikabox.repository.CartRepository;
 import tech.realworks.yusuf.zaikabox.repository.FoodRepository;
 import tech.realworks.yusuf.zaikabox.repository.OrderRepository;
+import tech.realworks.yusuf.zaikabox.repository.PaymentRequestRepository;
 import tech.realworks.yusuf.zaikabox.service.userservice.UserService;
 import tech.realworks.yusuf.zaikabox.util.OrderNotificationPublisher;
 
@@ -38,6 +39,7 @@ public class BillingServiceImpl implements BillingService {
     private final OrderRepository orderRepository;
     private final FoodRepository foodRepository;
     private final CartRepository cartRepository;
+    private final PaymentRequestRepository paymentRequestRepository;
     private final UserService userService;
     private final CartService cartService;
     private final RazorpayClient client;
@@ -62,9 +64,11 @@ public class BillingServiceImpl implements BillingService {
         List<OrderItemEntity> orderItems;
 
         // Determine if we should use cart items or items from the request
+        boolean useCart = false;
         if (orderRequest.isUseCart()) {
             // Use items from the user's cart
             orderItems = getOrderItemsFromCart(customerId);
+            useCart = true;
         } else if (orderRequest.getItems() != null && !orderRequest.getItems().isEmpty()) {
             // Use items from the request
             orderItems = getOrderItemsFromRequest(orderRequest.getItems());
@@ -74,46 +78,43 @@ public class BillingServiceImpl implements BillingService {
 
         // Calculate totals
         double subTotal = calculateSubTotal(orderItems);
-        double gstAmount = calculateGST(subTotal, DEFAULT_GST_RATE);
+        double gstAmount = calculateGST(subTotal);
         double totalAmountWithGST = subTotal + gstAmount;
 
-        // Create and save the order
-        OrderEntity orderEntity = OrderEntity.builder()
-                .orderId(generateOrderId())
+        String customOrderId = generateOrderId();
+
+        // Create Razorpay Order
+        JSONObject orderReq = new JSONObject();
+        orderReq.put("amount", Math.round(totalAmountWithGST * 100) );
+        orderReq.put("currency", "INR");
+        orderReq.put("receipt", customOrderId);
+
+        Order razorPayOrder = client.orders.create(orderReq);
+        String razorpayOrderId = razorPayOrder.get("id");
+
+        // Create Payment Request (Pre-order state)
+        PaymentRequestEntity paymentRequest = PaymentRequestEntity.builder()
                 .customerId(customerId)
+                .orderId(customOrderId)
+                .razorpayOrderId(razorpayOrderId)
+                .currency("INR")
                 .items(orderItems)
                 .subTotal(subTotal)
                 .gstRate(DEFAULT_GST_RATE)
                 .gstAmount(gstAmount)
                 .totalAmountWithGST(totalAmountWithGST)
-                .paymentMode(orderRequest.getPaymentMode())
-                .status(Status.PENDING)
-                .orderDate(LocalDateTime.now())
                 .billingDetails((orderRequest.getBillingDetails()))
+                .paymentMode(orderRequest.getPaymentMode())
+                .useCart(useCart)
+                .status("PENDING")
+                .createdAt(LocalDateTime.now())
                 .build();
 
+        paymentRequestRepository.save(paymentRequest);
 
-        // Clear the cart if we used it for the order
-        if (orderRequest.isUseCart()) {
-            cartService.clearCart();
-        }
-
-        JSONObject orderReq = new JSONObject();
-        orderReq.put("amount", Math.round(totalAmountWithGST * 100) );
-        orderReq.put("currency", "INR");
-        orderReq.put("receipt", orderEntity.getOrderId());
-
-        Order razorPayOrder = client.orders.create(orderReq);
-
-        orderEntity.setRazorpayOrderId(razorPayOrder.get("id"));
-        orderEntity.setPaymentStatus(razorPayOrder.get("status"));
-
-        orderEntity = orderRepository.save(orderEntity);
-
-        // Realtime admin notification: a new order has been created (PENDING until payment verification)
-        orderNotificationPublisher.notifyAdminNewOrder(orderEntity);
-
-        return convertToResponse(orderEntity);
+        // Return a response that mimics OrderResponse but based on PaymentRequest
+        // Note: The actual OrderEntity is not created until payment is verified via webhook
+        return convertPaymentRequestToResponse(paymentRequest);
     }
 
     @Override
@@ -235,12 +236,12 @@ public class BillingServiceImpl implements BillingService {
 
     /**
      * Calculate the GST amount
+     *
      * @param subTotal The subtotal
-     * @param gstRate The GST rate in percentage
      * @return The GST amount
      */
-    private double calculateGST(double subTotal, double gstRate) {
-        return (subTotal * gstRate) / 100;
+    private double calculateGST(double subTotal) {
+        return (subTotal * BillingServiceImpl.DEFAULT_GST_RATE) / 100;
     }
 
     /**
@@ -278,6 +279,47 @@ public class BillingServiceImpl implements BillingService {
         // Add billing details if available
         if (orderEntity.getBillingDetails() != null) {
             BillingDetails billingDetails = orderEntity.getBillingDetails();
+            response.setFirstName(billingDetails.getFirstName());
+            response.setLastName(billingDetails.getLastName());
+            response.setEmail(billingDetails.getEmail());
+            response.setAddress(billingDetails.getAddress());
+            response.setZip(billingDetails.getZip());
+            response.setLocality(billingDetails.getLocality());
+            response.setLandmark(billingDetails.getLandmark());
+            response.setCountry(billingDetails.getCountry());
+            response.setState(billingDetails.getState());
+        }
+
+        return response;
+    }
+
+    private OrderResponse convertPaymentRequestToResponse(PaymentRequestEntity paymentRequest) {
+        List<OrderItemResponse> itemResponses = paymentRequest.getItems().stream()
+                .map(item -> OrderItemResponse.builder()
+                        .name(item.getName())
+                        .quantity(item.getQuantity())
+                        .unitPrice(item.getUnitPrice())
+                        .total(item.getTotal())
+                        .build())
+                .collect(Collectors.toList());
+
+        OrderResponse response = OrderResponse.builder()
+                .orderId(paymentRequest.getOrderId())
+                .customerId(paymentRequest.getCustomerId())
+                .items(itemResponses)
+                .subTotal(paymentRequest.getSubTotal())
+                .gstRate(paymentRequest.getGstRate())
+                .gstAmount(paymentRequest.getGstAmount())
+                .totalAmountWithGST(paymentRequest.getTotalAmountWithGST())
+                .paymentMode(paymentRequest.getPaymentMode())
+                .orderDate(paymentRequest.getCreatedAt())
+                .status(paymentRequest.getStatus()) // "PENDING"
+                .razorpayOrderId(paymentRequest.getRazorpayOrderId())
+                .build();
+
+        // Add billing details if available
+        if (paymentRequest.getBillingDetails() != null) {
+            BillingDetails billingDetails = paymentRequest.getBillingDetails();
             response.setFirstName(billingDetails.getFirstName());
             response.setLastName(billingDetails.getLastName());
             response.setEmail(billingDetails.getEmail());
@@ -624,14 +666,30 @@ public class BillingServiceImpl implements BillingService {
             throw new IllegalArgumentException("Invalid payment signature");
         }
 
-        OrderEntity order = locateOrder(dto);
-        order.setRazorpayPaymentId(dto.getRazorpayPaymentId());
-        order.setRazorpaySignature(dto.getRazorpaySignature());
-        order.setPaymentStatus("paid");
-        order.setPaymentDate(LocalDateTime.now());
-        order.setStatus(Status.PAID);
-        order = orderRepository.save(order);
-        return convertToResponse(order);
+        // Check if order already exists (webhook or previous verification processed it)
+        Optional<OrderEntity> existingOrder = orderRepository.findByRazorpayOrderId(dto.getRazorpayOrderId());
+        if (existingOrder.isPresent()) {
+            return convertToResponse(existingOrder.get());
+        }
+
+        // Find Payment Request
+        PaymentRequestEntity paymentRequest = paymentRequestRepository.findByRazorpayOrderId(dto.getRazorpayOrderId())
+                .orElseThrow(() -> new NoSuchElementException("Payment Request not found for: " + dto.getRazorpayOrderId()));
+
+        if ("COMPLETED".equals(paymentRequest.getStatus())) {
+            // Race condition: marked completed but not found in order repo just above?
+            // Could strictly assume it exists now.
+            // For safety, we can try fetching order again or proceed.
+            // If we assume it is done, we try to fetch order.
+             return getOrder(paymentRequest.getOrderId());
+        }
+
+        createOrderInternal(paymentRequest, dto.getRazorpayPaymentId(), dto.getRazorpaySignature());
+
+        paymentRequest.setStatus("COMPLETED");
+        paymentRequestRepository.save(paymentRequest);
+
+        return getOrder(paymentRequest.getOrderId());
     }
 
     @Override
@@ -639,20 +697,84 @@ public class BillingServiceImpl implements BillingService {
         return getOrder(orderId);
     }
 
-    private OrderEntity locateOrder(RazorpayPaymentVerificationDTO dto) {
-        if (dto.getRazorpayOrderId() != null) {
-            Optional<OrderEntity> byRazorpay = orderRepository.findByRazorpayOrderId(dto.getRazorpayOrderId());
-            if (byRazorpay.isPresent()) {
-                return byRazorpay.get();
+
+    @Override
+    public void processWebhook(String payload, String signature) {
+        try {
+            // 1. Verify Signature
+            if (!Utils.verifyWebhookSignature(payload, signature, razorPaySecret)) {
+                throw new SecurityException("Invalid Webhook Signature");
             }
-        }
-        if (dto.getOrderId() != null) {
-            Optional<OrderEntity> byOrderId = orderRepository.findByOrderId(dto.getOrderId());
-            if (byOrderId.isPresent()) {
-                return byOrderId.get();
+
+            JSONObject json = new JSONObject(payload);
+            String event = json.getString("event");
+
+            if ("payment.captured".equals(event) || "order.paid".equals(event)) {
+                JSONObject payloadObj = json.getJSONObject("payload");
+                JSONObject payment = payloadObj.getJSONObject("payment").getJSONObject("entity");
+                JSONObject order = payloadObj.getJSONObject("order").getJSONObject("entity");
+
+                String razorpayOrderId = order.getString("id");
+                String razorpayPaymentId = payment.getString("id");
+
+                // 2. Find Payment Request
+                PaymentRequestEntity paymentRequest = paymentRequestRepository.findByRazorpayOrderId(razorpayOrderId)
+                        .orElseThrow(() -> new NoSuchElementException("Payment Request not found: " + razorpayOrderId));
+
+                // 3. Check if already processed
+                if ("COMPLETED".equals(paymentRequest.getStatus())) {
+                    return; // Idempotency
+                }
+
+                // 4. Create Order Internal
+                createOrderInternal(paymentRequest, razorpayPaymentId, signature);
+
+                // 5. Update Payment Request
+                paymentRequest.setStatus("COMPLETED");
+                paymentRequestRepository.save(paymentRequest);
             }
+        } catch (Exception e) {
+            // Log error
+            System.err.println("Webhook processing failed: " + e.getMessage());
+            // We don't throw exception to avoid retry loops from Razorpay if it's a logic error we can't fix
+            // But if it's transient, we might want to throw.
+            // For now, let's treat it as consumed but failed.
         }
-        throw new NoSuchElementException("Order not found for verification");
+    }
+
+    private void createOrderInternal(PaymentRequestEntity paymentRequest, String razorpayPaymentId, String signature) {
+         OrderEntity orderEntity = OrderEntity.builder()
+                .orderId(paymentRequest.getOrderId())
+                .customerId(paymentRequest.getCustomerId())
+                .items(paymentRequest.getItems())
+                .subTotal(paymentRequest.getSubTotal())
+                .gstRate(paymentRequest.getGstRate())
+                .gstAmount(paymentRequest.getGstAmount())
+                .totalAmountWithGST(paymentRequest.getTotalAmountWithGST())
+                .paymentMode(paymentRequest.getPaymentMode())
+                .status(Status.PAID)
+                .orderDate(LocalDateTime.now())
+                .billingDetails(paymentRequest.getBillingDetails())
+                .razorpayOrderId(paymentRequest.getRazorpayOrderId())
+                .razorpayPaymentId(razorpayPaymentId)
+                .razorpaySignature(signature)
+                .paymentStatus("paid")
+                .paymentDate(LocalDateTime.now())
+                .build();
+
+        orderEntity = orderRepository.save(orderEntity);
+
+        // Clear cart if needed - Use clearCart(userId) as we are in background thread context probably
+        if (paymentRequest.isUseCart()) {
+            cartService.clearCart(paymentRequest.getCustomerId());
+        }
+
+        // Notify Admin
+        orderNotificationPublisher.notifyAdminNewOrder(orderEntity);
+
+        // Notify User via WebSocket
+        orderNotificationPublisher.notifyUserOrderUpdate(orderEntity);
     }
 }
+
 
