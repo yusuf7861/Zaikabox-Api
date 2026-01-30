@@ -29,15 +29,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
 
     private static final List<String> WHITELISTS_URLs = List.of(
-            "/api/v1/users/register", 
-            "/api/v1/users/login", 
-            "/api/v1/users/is-authenticated",
-            "/api/v1/users/logout",
-            "/api/v1/foods/**", 
+            "/ws/**",
+            "/api/v1/auth/register",
+            "/api/v1/auth/login",
+            "/api/v1/auth/forgot-password",
+            "/api/v1/auth/verify-otp",
+            "/api/v1/auth/reset-password",
+            "/api/v1/admin/login",
+            "/api/v1/payment/webhook",
             "/contact-us",
-            "/send-reset-otp", 
-            "/reset-password", 
-            "/logout", 
+            "/swagger-ui.html",
+            "/swagger-ui/**",
+            "/api-docs/**",
             "/error"
     );
 

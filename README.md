@@ -317,7 +317,7 @@ The Zaikabox API is built using a layered architecture pattern with Spring Boot,
     "razorpayPaymentId": "pay_xxx",
     "razorpayOrderId": "order_xxx",
     "razorpaySignature": "signature",
-    "orderId": "FD..." // optional helper
+    "orderId": "FD..."
   }
   ```
 - Response: updated order with `status`=PAID, `paymentStatus`="paid", `razorpayPaymentId`, `paymentDate`.
