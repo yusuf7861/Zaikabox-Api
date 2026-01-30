@@ -16,7 +16,6 @@ import tech.realworks.yusuf.zaikabox.io.user.SendResetOtpRequest;
 import tech.realworks.yusuf.zaikabox.io.user.UserResponse;
 import tech.realworks.yusuf.zaikabox.io.user.VerifyAdminOtpRequest;
 import tech.realworks.yusuf.zaikabox.service.userservice.AdminUserService;
-import tech.realworks.yusuf.zaikabox.service.userservice.UserService;
 
 import java.util.List;
 import java.util.Map;
@@ -29,15 +28,6 @@ import java.util.Map;
 public class AdminUserController {
 
     private final AdminUserService adminUserService;
-
-    private final UserService userService;
-
-    @Operation(summary = "Get Admin profile", description = "Retrieves the profile of the Admin.")
-    @GetMapping("/profile")
-    public ResponseEntity<UserResponse> getUserProfile() {
-        UserResponse userProfile = userService.getUserProfile();
-        return ResponseEntity.ok(userProfile);
-    }
 
     @Operation(summary = "Get all users (admin only)", description = "Retrieves all users. Requires ADMIN role.")
     @ApiResponse(responseCode = "200", description = "List of users retrieved successfully", content = @Content(schema = @Schema(implementation = UserResponse.class)))
