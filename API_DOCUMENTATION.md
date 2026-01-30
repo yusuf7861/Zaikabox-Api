@@ -1,4 +1,4 @@
-# ZaikaBox API Documentation
+# ZaikaBox API Documentation - ALL APIs
 
 ## Table of Contents
 1. [Overview](#overview)
