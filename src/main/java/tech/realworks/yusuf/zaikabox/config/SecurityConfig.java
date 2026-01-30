@@ -70,7 +70,8 @@ public class SecurityConfig {
                                         "/api/v1/users/reset-password",
                                         "/api/v1/users/send-otp",
                                         "/api/v1/orders/verify-payment",
-                                        "/api/v1/payment/verify"
+                                        "/api/v1/payment/verify",
+                                        "/api/v1/admin/login"
                                 ).permitAll()
                                 // Admin-only endpoints
                                 .requestMatchers(
