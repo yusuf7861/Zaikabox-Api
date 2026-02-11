@@ -4,6 +4,8 @@ Zaikabox API is a comprehensive Spring Boot application that provides a backend 
 
 ## Core Features
 
+
+
 ### 1. User Management System
 
 The user management system handles all aspects of user accounts, authentication, and authorization.
