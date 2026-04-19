@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,6 +25,7 @@ public class FoodServiceImpl implements FoodService {
 
     private final ObjectProvider<BlobContainerClient> blobContainerClientProvider;
     private final FoodRepository foodRepository;
+    private final AtomicBoolean containerEnsured = new AtomicBoolean(false);
 
     private BlobContainerClient getBlobContainerClient() {
         BlobContainerClient blobContainerClient = blobContainerClientProvider.getIfAvailable();
@@ -33,15 +35,20 @@ public class FoodServiceImpl implements FoodService {
         return blobContainerClient;
     }
 
-    public void ensureContainerExists() {
-        BlobContainerClient blobContainerClient = getBlobContainerClient();
-        if (!blobContainerClient.exists()) {
+    private void ensureContainerExists() {
+        if (containerEnsured.get()) {
+            return;
+        }
+        synchronized (this) {
+            if (containerEnsured.get()) {
+                return;
+            }
+            BlobContainerClient blobContainerClient = getBlobContainerClient();
             try {
-                blobContainerClient.create();
+                blobContainerClient.createIfNotExists();
+                containerEnsured.set(true);
             } catch (Exception e) {
-                if (!blobContainerClient.exists()) {
-                    throw new IllegalStateException("Failed to create Azure Blob container", e);
-                }
+                throw new IllegalStateException("Failed to create Azure Blob container", e);
             }
         }
     }
