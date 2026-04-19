@@ -1,8 +1,7 @@
 package tech.realworks.yusuf.zaikabox.config;
 
 import com.azure.storage.blob.BlobContainerClient;
-import com.azure.storage.blob.BlobServiceClient;
-import com.azure.storage.blob.BlobServiceClientBuilder;
+import com.azure.storage.blob.BlobContainerClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,18 +14,15 @@ public class AzureConfiguration {
     private String containerName;
 
     @Bean
-    public BlobServiceClient blobServiceClient() {
-        return (new BlobServiceClientBuilder()).connectionString(connectionString).buildClient();
-    }
-
-    @Bean
-    public BlobContainerClient blobContainerClient(BlobServiceClient blobServiceClient, @Value("${spring.cloud.azure.storage.blob.container-name}") String containerName) {
-        BlobContainerClient containerClient = blobServiceClient.getBlobContainerClient(containerName);
-
-        if (!containerClient.exists()) {
-            containerClient.create();
+    public BlobContainerClient blobContainerClient() {
+        try {
+            return new BlobContainerClientBuilder()
+                    .connectionString(connectionString)
+                    .containerName(containerName)
+                    .buildClient();
+        } catch (Exception e) {
+            System.out.println("Azure Blob init failed: " + e.getMessage());
+            return null;
         }
-
-        return containerClient;
     }
 }

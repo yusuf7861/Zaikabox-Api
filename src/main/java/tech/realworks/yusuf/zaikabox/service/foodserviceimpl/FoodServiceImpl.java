@@ -21,15 +21,24 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FoodServiceImpl implements FoodService {
 
-    private final BlobContainerClient containerClient;
-    private final FoodRepository foodRepository;
     private final BlobContainerClient blobContainerClient;
+    private final FoodRepository foodRepository;
+
+    public void ensureContainerExists() {
+        if (blobContainerClient == null) {
+            throw new IllegalStateException("Azure Blob container client is not available");
+        }
+        if (!blobContainerClient.exists()) {
+            blobContainerClient.create();
+        }
+    }
 
     @Override
     public String uploadFile(MultipartFile file) {
         String var10000 = String.valueOf(UUID.randomUUID());
         String filename = var10000 + "-" + file.getOriginalFilename();
-        BlobClient blobClient = this.containerClient.getBlobClient(filename);
+        ensureContainerExists();
+        BlobClient blobClient = this.blobContainerClient.getBlobClient(filename);
 
         try (InputStream inputStream = file.getInputStream()) {
             blobClient.upload(inputStream, file.getSize(), true);
@@ -65,6 +74,7 @@ public class FoodServiceImpl implements FoodService {
     @Override
     public boolean deleteFile(String fileName) {
         try {
+            ensureContainerExists();
             BlobClient blobClient = blobContainerClient.getBlobClient(fileName);
 
             if(blobClient.exists()) {
