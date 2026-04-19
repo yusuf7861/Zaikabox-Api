@@ -3,6 +3,7 @@ package tech.realworks.yusuf.zaikabox.service.foodserviceimpl;
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import tech.realworks.yusuf.zaikabox.entity.FoodEntity;
@@ -21,15 +22,27 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FoodServiceImpl implements FoodService {
 
-    private final BlobContainerClient blobContainerClient;
+    private final ObjectProvider<BlobContainerClient> blobContainerClientProvider;
     private final FoodRepository foodRepository;
 
-    public void ensureContainerExists() {
+    private BlobContainerClient getBlobContainerClient() {
+        BlobContainerClient blobContainerClient = blobContainerClientProvider.getIfAvailable();
         if (blobContainerClient == null) {
             throw new IllegalStateException("Azure Blob container client is not available");
         }
+        return blobContainerClient;
+    }
+
+    public void ensureContainerExists() {
+        BlobContainerClient blobContainerClient = getBlobContainerClient();
         if (!blobContainerClient.exists()) {
-            blobContainerClient.create();
+            try {
+                blobContainerClient.create();
+            } catch (Exception e) {
+                if (!blobContainerClient.exists()) {
+                    throw new IllegalStateException("Failed to create Azure Blob container", e);
+                }
+            }
         }
     }
 
@@ -38,7 +51,7 @@ public class FoodServiceImpl implements FoodService {
         String var10000 = String.valueOf(UUID.randomUUID());
         String filename = var10000 + "-" + file.getOriginalFilename();
         ensureContainerExists();
-        BlobClient blobClient = this.blobContainerClient.getBlobClient(filename);
+        BlobClient blobClient = this.getBlobContainerClient().getBlobClient(filename);
 
         try (InputStream inputStream = file.getInputStream()) {
             blobClient.upload(inputStream, file.getSize(), true);
@@ -75,7 +88,7 @@ public class FoodServiceImpl implements FoodService {
     public boolean deleteFile(String fileName) {
         try {
             ensureContainerExists();
-            BlobClient blobClient = blobContainerClient.getBlobClient(fileName);
+            BlobClient blobClient = getBlobContainerClient().getBlobClient(fileName);
 
             if(blobClient.exists()) {
                 blobClient.delete();
