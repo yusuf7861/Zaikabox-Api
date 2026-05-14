@@ -1,0 +1,137 @@
+{
+  "info": {
+    "name": "Zaikabox API",
+    "_postman_id": "f2a9cbf8-8f11-4f8d-96de-3d1f122a449a",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Core auth/order/payment flows for Zaikabox API"
+  },
+  "item": [
+    {
+      "name": "Auth - Register",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Demo User\",\n  \"email\": \"demo@example.com\",\n  \"password\": \"Demo@1234\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/register",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "auth", "register"]
+        }
+      }
+    },
+    {
+      "name": "Auth - Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"demo@example.com\",\n  \"password\": \"Demo@1234\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "Orders - Create",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtToken}}"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{idempotencyKey}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"paymentMode\": \"UPI\",\n  \"useCart\": false,\n  \"items\": [{\"foodId\": \"replace-food-id\", \"quantity\": 1}],\n  \"billingDetails\": {\n    \"firstName\": \"Demo\",\n    \"lastName\": \"User\",\n    \"email\": \"demo@example.com\",\n    \"phoneNumber\": \"9876543210\",\n    \"address\": \"Street 1\",\n    \"zip\": \"560001\",\n    \"locality\": \"City Center\",\n    \"landmark\": \"Near Park\",\n    \"country\": \"India\",\n    \"state\": \"Karnataka\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/orders",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "orders"]
+        }
+      }
+    },
+    {
+      "name": "Orders - Verify Payment",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{idempotencyKey}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"razorpayPaymentId\": \"pay_xxx\",\n  \"razorpayOrderId\": \"order_xxx\",\n  \"razorpaySignature\": \"sig_xxx\",\n  \"orderId\": \"FDxxxx\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/orders/verify-payment",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "orders", "verify-payment"]
+        }
+      }
+    },
+    {
+      "name": "Orders - List My Orders",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwtToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/orders",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "orders"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "jwtToken",
+      "value": ""
+    },
+    {
+      "key": "idempotencyKey",
+      "value": "d9e8b5d2-66f7-4e4f-a8e9-845b6f8740d8"
+    }
+  ]
+}
