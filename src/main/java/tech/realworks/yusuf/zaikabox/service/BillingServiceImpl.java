@@ -712,6 +712,9 @@ public class BillingServiceImpl implements BillingService {
 
     @Override
     public void processWebhook(String payload, String signature) {
+        String eventName = "unknown";
+        String razorpayOrderId = "unknown";
+        String razorpayPaymentId = "unknown";
         try {
             // 1. Verify Signature
             if (!Utils.verifyWebhookSignature(payload, signature, razorPaySecret)) {
@@ -720,18 +723,20 @@ public class BillingServiceImpl implements BillingService {
 
             JSONObject json = new JSONObject(payload);
             String event = json.getString("event");
+            eventName = event;
 
             if ("payment.captured".equals(event) || "order.paid".equals(event)) {
                 JSONObject payloadObj = json.getJSONObject("payload");
                 JSONObject payment = payloadObj.getJSONObject("payment").getJSONObject("entity");
                 JSONObject order = payloadObj.getJSONObject("order").getJSONObject("entity");
 
-                String razorpayOrderId = order.getString("id");
-                String razorpayPaymentId = payment.getString("id");
+                razorpayOrderId = order.getString("id");
+                razorpayPaymentId = payment.getString("id");
 
                 // 2. Find Payment Request
-                PaymentRequestEntity paymentRequest = paymentRequestRepository.findByRazorpayOrderId(razorpayOrderId)
-                        .orElseThrow(() -> new NoSuchElementException("Payment Request not found: " + razorpayOrderId));
+                final String currentRazorpayOrderId = razorpayOrderId;
+                PaymentRequestEntity paymentRequest = paymentRequestRepository.findByRazorpayOrderId(currentRazorpayOrderId)
+                        .orElseThrow(() -> new NoSuchElementException("Payment Request not found: " + currentRazorpayOrderId));
 
                 // 3. Check if already processed
                 if ("COMPLETED".equals(paymentRequest.getStatus())) {
@@ -746,7 +751,8 @@ public class BillingServiceImpl implements BillingService {
                 paymentRequestRepository.save(paymentRequest);
             }
         } catch (Exception e) {
-            log.error("Webhook processing failed: {}", e.getMessage(), e);
+            log.error("Webhook processing failed event={} razorpayOrderId={} razorpayPaymentId={} reason={}",
+                    eventName, razorpayOrderId, razorpayPaymentId, e.getMessage(), e);
         }
     }
 
@@ -791,4 +797,3 @@ public class BillingServiceImpl implements BillingService {
         orderNotificationPublisher.notifyUserOrderUpdate(orderEntity);
     }
 }
-

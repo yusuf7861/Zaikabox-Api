@@ -92,9 +92,12 @@ public class AdminController {
 
             auditService.logLoginEvent(userOpt.get().getId(), authRequest.getEmail(), true, "Admin logged in successfully");
 
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.SET_COOKIE, cookie.toString());
+            headers.add(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+
             return ResponseEntity.ok()
-                    .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                    .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                    .headers(headers)
                     .body(new AuthenticationResponse(token, authRequest.getEmail()));
 
         } catch (Exception e) {

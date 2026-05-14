@@ -51,7 +51,7 @@ docker compose up -d mongo
 
 ## Demo and Design Assets
 
-- Demo video: `https://www.loom.com/share/replace-with-your-demo-link`
+- Demo video: add your recorded walkthrough link here
 - Architecture diagram: `docs/architecture-diagram.png` (add your exported diagram file)
 - Postman collection: `postman/Zaikabox-Api.postman_collection.json`
 

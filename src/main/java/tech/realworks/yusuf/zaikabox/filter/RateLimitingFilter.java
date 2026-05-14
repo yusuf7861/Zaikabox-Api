@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -30,6 +31,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     private final RateLimitService rateLimitService;
     private final ObjectMapper objectMapper;
+    @Value("${app.security.trust-proxy-headers:false}")
+    private boolean trustProxyHeaders;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -39,9 +42,17 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             return;
         }
 
-        String clientIp = request.getHeader("X-Forwarded-For");
-        if (clientIp == null || clientIp.isBlank()) {
-            clientIp = request.getRemoteAddr();
+        String clientIp = request.getRemoteAddr();
+        if (trustProxyHeaders) {
+            String forwardedFor = request.getHeader("X-Forwarded-For");
+            if (forwardedFor != null && !forwardedFor.isBlank()) {
+                clientIp = forwardedFor.contains(",") ? forwardedFor.split(",")[0].trim() : forwardedFor;
+            } else {
+                String realIp = request.getHeader("X-Real-IP");
+                if (realIp != null && !realIp.isBlank()) {
+                    clientIp = realIp;
+                }
+            }
         }
         String key = clientIp + ":" + path;
         if (!rateLimitService.allow(key)) {

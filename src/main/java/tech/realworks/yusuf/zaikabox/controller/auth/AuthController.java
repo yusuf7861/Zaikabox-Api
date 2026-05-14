@@ -110,9 +110,12 @@ public class AuthController {
 
             auditService.logLoginEvent(userId, authRequest.getEmail(), true, "User logged in successfully");
 
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.SET_COOKIE, cookie.toString());
+            headers.add(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+
             return ResponseEntity.ok()
-                    .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                    .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                    .headers(headers)
                     .body(new AuthenticationResponse(token, authRequest.getEmail()));
         } catch (AuthenticationException e) {
             auditService.logLoginEvent(null, authRequest.getEmail(), false, "Invalid credentials");
@@ -147,9 +150,12 @@ public class AuthController {
                 .sameSite("none")
                 .build();
 
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.SET_COOKIE, accessCookie.toString());
+        headers.add(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
-                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .headers(headers)
                 .body(new AuthenticationResponse(accessToken, rotated.getEmail()));
     }
 
@@ -210,9 +216,12 @@ public class AuthController {
         response.put("message", "Logged out successfully");
         auditService.logLogoutEvent(userId, email);
 
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.SET_COOKIE, cookie.toString());
+        headers.add(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .headers(headers)
                 .body(response);
     }
 

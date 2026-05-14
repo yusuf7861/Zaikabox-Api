@@ -20,7 +20,6 @@ public class RefreshTokenService {
     private long refreshTokenExpirationDays;
 
     public RefreshTokenEntity issueToken(String userId, String email) {
-        refreshTokenRepository.deleteByUserId(userId);
         return refreshTokenRepository.save(
                 RefreshTokenEntity.builder()
                         .token(UUID.randomUUID().toString())

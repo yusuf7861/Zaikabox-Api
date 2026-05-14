@@ -26,23 +26,22 @@ public class IdempotencyService {
         }
 
         String key = operation + ":" + idempotencyKey;
-        Object existing = cache.getIfPresent(key);
-        if (existing != null) {
-            return (T) existing;
+        try {
+            return (T) cache.asMap().computeIfAbsent(key, ignored -> {
+                try {
+                    return task.call();
+                } catch (Exception e) {
+                    throw new TaskExecutionRuntimeException(e);
+                }
+            });
+        } catch (TaskExecutionRuntimeException ex) {
+            throw new RuntimeException(ex.getCause());
         }
+    }
 
-        synchronized (key.intern()) {
-            existing = cache.getIfPresent(key);
-            if (existing != null) {
-                return (T) existing;
-            }
-            try {
-                T result = task.call();
-                cache.put(key, result);
-                return result;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+    private static class TaskExecutionRuntimeException extends RuntimeException {
+        TaskExecutionRuntimeException(Throwable cause) {
+            super(cause);
         }
     }
 }
