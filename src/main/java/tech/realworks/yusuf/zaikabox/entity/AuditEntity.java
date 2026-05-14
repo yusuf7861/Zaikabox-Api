@@ -46,6 +46,8 @@ public class AuditEntity {
         REGISTER,
         PASSWORD_RESET,
         PROFILE_UPDATE,
-        LOGOUT
+        LOGOUT,
+        ADMIN_ORDER_STATUS_UPDATE,
+        ADMIN_ORDER_DELETE
     }
 }

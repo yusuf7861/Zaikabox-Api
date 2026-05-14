@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,7 @@ import tech.realworks.yusuf.zaikabox.io.user.UserResponse;
 import tech.realworks.yusuf.zaikabox.repository.userRepo.UserRepository;
 import tech.realworks.yusuf.zaikabox.service.AuditService;
 import tech.realworks.yusuf.zaikabox.service.userservice.AppUserDetailsService;
+import tech.realworks.yusuf.zaikabox.service.userservice.RefreshTokenService;
 import tech.realworks.yusuf.zaikabox.service.userservice.UserService;
 import tech.realworks.yusuf.zaikabox.util.JwtUtil;
 
@@ -43,6 +45,7 @@ public class AdminController {
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
     private final AuditService auditService;
+    private final RefreshTokenService refreshTokenService;
 
 
     @Operation(summary = "Admin login", description = "Authenticates an admin and returns a JWT token.")
@@ -51,7 +54,7 @@ public class AdminController {
             @ApiResponse(responseCode = "401", description = "Invalid credentials or not an admin", content = @Content(schema = @Schema(implementation = ErrorsResponse.class)))
     })
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthenticationRequest authRequest){
+    public ResponseEntity<?> login(@Valid @RequestBody AuthenticationRequest authRequest){
         try {
             Optional<UserEntity> userOpt = userRepository.findByEmail(authRequest.getEmail());
 
@@ -71,6 +74,7 @@ public class AdminController {
             final UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getEmail());
 
             final String token = jwtUtil.generateToken(userDetails);
+            String refreshToken = refreshTokenService.issueToken(userOpt.get().getId(), authRequest.getEmail()).getToken();
             ResponseCookie cookie = ResponseCookie.from("jwt", token)
                     .httpOnly(true)
                     .secure(true)
@@ -78,11 +82,19 @@ public class AdminController {
                     .maxAge(Duration.ofDays(1))
                     .sameSite("none")
                     .build();
+            ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refreshToken)
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/")
+                    .maxAge(Duration.ofDays(7))
+                    .sameSite("none")
+                    .build();
 
             auditService.logLoginEvent(userOpt.get().getId(), authRequest.getEmail(), true, "Admin logged in successfully");
 
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                    .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                     .body(new AuthenticationResponse(token, authRequest.getEmail()));
 
         } catch (Exception e) {

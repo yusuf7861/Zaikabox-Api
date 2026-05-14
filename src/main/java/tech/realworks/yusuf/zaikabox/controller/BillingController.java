@@ -1,12 +1,12 @@
 package tech.realworks.yusuf.zaikabox.controller;
 
-import com.razorpay.RazorpayException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,7 +19,9 @@ import tech.realworks.yusuf.zaikabox.io.ErrorsResponse;
 import tech.realworks.yusuf.zaikabox.io.OrderRequest;
 import tech.realworks.yusuf.zaikabox.io.OrderResponse;
 import tech.realworks.yusuf.zaikabox.io.RazorpayPaymentVerificationDTO;
+import tech.realworks.yusuf.zaikabox.service.AuditService;
 import tech.realworks.yusuf.zaikabox.service.BillingService;
+import tech.realworks.yusuf.zaikabox.service.IdempotencyService;
 import tech.realworks.yusuf.zaikabox.service.OrderService;
 
 import java.nio.charset.StandardCharsets;
@@ -36,6 +38,8 @@ public class BillingController {
 
     private final BillingService billingService;
     private final OrderService orderService;
+    private final IdempotencyService idempotencyService;
+    private final AuditService auditService;
 
     @Operation(summary = "Create a new order", description = "Creates a new order and returns the order details.")
     @ApiResponses(value = {
@@ -43,8 +47,12 @@ public class BillingController {
             @ApiResponse(responseCode = "400", description = "Invalid order request", content = @Content(schema = @Schema(implementation = ErrorsResponse.class)))
     })
     @PostMapping
-    public ResponseEntity<OrderResponse> createOrder(@RequestBody OrderRequest orderRequest) throws RazorpayException {
-        return ResponseEntity.status(HttpStatus.CREATED).body(billingService.createOrder(orderRequest));
+    public ResponseEntity<OrderResponse> createOrder(
+            @Valid @RequestBody OrderRequest orderRequest,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey
+    ) {
+        OrderResponse response = idempotencyService.execute(idempotencyKey, "create-order", () -> billingService.createOrder(orderRequest));
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @Operation(summary = "Verify payment", description = "Verifies a Razorpay payment signature.")
@@ -54,8 +62,12 @@ public class BillingController {
             @ApiResponse(responseCode = "500", description = "Verification failed")
     })
     @PostMapping("/verify-payment")
-    public ResponseEntity<OrderResponse> verifyPayment(@RequestBody RazorpayPaymentVerificationDTO dto) {
-        return ResponseEntity.ok(billingService.verifyPayment(dto));
+    public ResponseEntity<OrderResponse> verifyPayment(
+            @Valid @RequestBody RazorpayPaymentVerificationDTO dto,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey
+    ) {
+        OrderResponse response = idempotencyService.execute(idempotencyKey, "verify-payment", () -> billingService.verifyPayment(dto));
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Get order by ID", description = "Retrieves an order by its ID.")
@@ -127,8 +139,10 @@ public class BillingController {
     public ResponseEntity<?> deleteOrder(@PathVariable String orderId) {
         try {
             orderService.deleteOrder(orderId);
+            auditService.logEvent(null, null, "ADMIN_ORDER_DELETE", "Admin deleted order " + orderId, true);
             return ResponseEntity.ok("Order deleted successfully");
         } catch (RuntimeException e) {
+            auditService.logEvent(null, null, "ADMIN_ORDER_DELETE", "Failed to delete order " + orderId + ": " + e.getMessage(), false);
             return ResponseEntity.internalServerError().body(new ErrorsResponse(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
@@ -138,6 +152,7 @@ public class BillingController {
     @PutMapping("/{orderId}")
     public void updateOrderStatus(@PathVariable String orderId, Status status) {
         orderService.changeStatusOfOrder(orderId, status);
+        auditService.logEvent(null, null, "ADMIN_ORDER_STATUS_UPDATE", "Admin changed order " + orderId + " to " + status, true);
     }
 
     @Operation(summary = "Track order", description = "Tracks the status of an order by its ID.")

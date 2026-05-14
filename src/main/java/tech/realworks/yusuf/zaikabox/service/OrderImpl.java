@@ -2,7 +2,9 @@ package tech.realworks.yusuf.zaikabox.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import tech.realworks.yusuf.zaikabox.event.OrderLifecycleEvent;
 import tech.realworks.yusuf.zaikabox.entity.OrderEntity;
 import tech.realworks.yusuf.zaikabox.entity.Status;
 import tech.realworks.yusuf.zaikabox.repository.OrderRepository;
@@ -16,6 +18,7 @@ import java.util.Optional;
 public class OrderImpl implements OrderService{
 
     private final OrderRepository orderRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public void changeStatusOfOrder(String orderId, Status status) {
@@ -27,7 +30,14 @@ public class OrderImpl implements OrderService{
 
         OrderEntity orderEntity = byOrderId.get();
         orderEntity.setStatus(status);
-        orderRepository.save(orderEntity);
+        OrderEntity saved = orderRepository.save(orderEntity);
+        eventPublisher.publishEvent(OrderLifecycleEvent.builder()
+                .orderId(saved.getOrderId())
+                .customerId(saved.getCustomerId())
+                .status(status.name())
+                .source("admin_order_status_update")
+                .occurredAt(java.time.LocalDateTime.now())
+                .build());
     }
 
     @Override
@@ -45,7 +55,15 @@ public class OrderImpl implements OrderService{
                 log.error("Order not found with ID: {}", orderId);
                 return;
             }
+            OrderEntity existing = byOrderId.get();
             orderRepository.deleteByOrderId(orderId);
+            eventPublisher.publishEvent(OrderLifecycleEvent.builder()
+                    .orderId(existing.getOrderId())
+                    .customerId(existing.getCustomerId())
+                    .status(Status.CANCELLED.name())
+                    .source("admin_order_delete")
+                    .occurredAt(java.time.LocalDateTime.now())
+                    .build());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

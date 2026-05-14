@@ -34,12 +34,10 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: 'maven'
 
-      - name: Build with Maven
-        run: mvn clean package -DskipTests
-
-      - name: Run Tests
-        run: mvn test
+      - name: Build, test and coverage check
+        run: ./mvnw --no-transfer-progress clean verify
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3

@@ -22,7 +22,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+import tech.realworks.yusuf.zaikabox.filter.CorrelationIdFilter;
 import tech.realworks.yusuf.zaikabox.filter.JwtAuthenticationFilter;
+import tech.realworks.yusuf.zaikabox.filter.RateLimitingFilter;
 import tech.realworks.yusuf.zaikabox.service.userservice.AppUserDetailsService;
 
 import java.util.List;
@@ -42,7 +44,12 @@ public class SecurityConfig {
     private String razorPayKey;
 
     @Bean
-    public SecurityFilterChain securityFilter(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+    public SecurityFilterChain securityFilter(
+            HttpSecurity http,
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            RateLimitingFilter rateLimitingFilter,
+            CorrelationIdFilter correlationIdFilter
+    ) throws Exception {
         http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
@@ -51,6 +58,7 @@ public class SecurityConfig {
                                 .requestMatchers(
                                         "/ws/**",
                                         "/api/v1/auth/**",
+                                        "/api/v1/auth/refresh",
                                         "/api/v1/foods/**",
                                         "/contact-us",
                                         "/swagger-ui.html",
@@ -60,7 +68,10 @@ public class SecurityConfig {
                                         "/api/v1/orders/verify-payment",
                                         "/api/v1/payment/verify",
                                         "/api/v1/payment/webhook",
-                                        "/api/v1/admin/login"
+                                        "/api/v1/admin/login",
+                                        "/actuator/health",
+                                        "/actuator/info",
+                                        "/actuator/prometheus"
                                     ).permitAll()
                                 // Admin-only endpoints
                                 .requestMatchers(
@@ -72,6 +83,8 @@ public class SecurityConfig {
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(correlationIdFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
@@ -90,7 +103,8 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:5174", "http://localhost:5173", "http://localhost:8081", "https://zaikabox.vercel.app", "https://zaikabox-audit-logs.vercel.app"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cookie"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cookie", "Idempotency-Key", "X-Correlation-ID"));
+        config.setExposedHeaders(List.of("X-Correlation-ID"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

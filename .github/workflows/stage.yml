@@ -23,6 +23,7 @@ jobs:
       MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
       RAZORPAY_KEY: ${{ secrets.RAZORPAY_KEY }}
       RAZORPAY_SECRET: ${{ secrets.RAZORPAY_SECRET }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
     steps:
       - name: Checkout code
@@ -33,9 +34,7 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: 'maven'
 
-      - name: Build with Maven
-        run: mvn clean package -DskipTests
-
-      - name: Run Tests
-        run: mvn test
+      - name: Build, test and coverage check
+        run: ./mvnw --no-transfer-progress clean verify

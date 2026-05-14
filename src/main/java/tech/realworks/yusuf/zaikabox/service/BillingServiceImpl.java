@@ -9,9 +9,12 @@ import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
 import com.razorpay.Utils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import tech.realworks.yusuf.zaikabox.event.OrderLifecycleEvent;
 import tech.realworks.yusuf.zaikabox.entity.*;
 import tech.realworks.yusuf.zaikabox.io.OrderItemRequest;
 import tech.realworks.yusuf.zaikabox.io.OrderItemResponse;
@@ -34,6 +37,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BillingServiceImpl implements BillingService {
 
     private final OrderRepository orderRepository;
@@ -44,6 +48,7 @@ public class BillingServiceImpl implements BillingService {
     private final CartService cartService;
     private final RazorpayClient client;
     private final OrderNotificationPublisher orderNotificationPublisher;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Value("${razorpay.currency}")
     private String razorPayCurrency;
@@ -111,6 +116,13 @@ public class BillingServiceImpl implements BillingService {
                 .build();
 
         paymentRequestRepository.save(paymentRequest);
+        eventPublisher.publishEvent(OrderLifecycleEvent.builder()
+                .orderId(paymentRequest.getOrderId())
+                .customerId(paymentRequest.getCustomerId())
+                .status("PENDING")
+                .source("payment_request_created")
+                .occurredAt(LocalDateTime.now())
+                .build());
 
         // Return a response that mimics OrderResponse but based on PaymentRequest
         // Note: The actual OrderEntity is not created until payment is verified via webhook
@@ -734,11 +746,7 @@ public class BillingServiceImpl implements BillingService {
                 paymentRequestRepository.save(paymentRequest);
             }
         } catch (Exception e) {
-            // Log error
-            System.err.println("Webhook processing failed: " + e.getMessage());
-            // We don't throw exception to avoid retry loops from Razorpay if it's a logic error we can't fix
-            // But if it's transient, we might want to throw.
-            // For now, let's treat it as consumed but failed.
+            log.error("Webhook processing failed: {}", e.getMessage(), e);
         }
     }
 
@@ -763,6 +771,13 @@ public class BillingServiceImpl implements BillingService {
                 .build();
 
         orderEntity = orderRepository.save(orderEntity);
+        eventPublisher.publishEvent(OrderLifecycleEvent.builder()
+                .orderId(orderEntity.getOrderId())
+                .customerId(orderEntity.getCustomerId())
+                .status(Status.PAID.name())
+                .source("payment_verified")
+                .occurredAt(LocalDateTime.now())
+                .build());
 
         // Clear cart if needed - Use clearCart(userId) as we are in background thread context probably
         if (paymentRequest.isUseCart()) {
@@ -776,5 +791,4 @@ public class BillingServiceImpl implements BillingService {
         orderNotificationPublisher.notifyUserOrderUpdate(orderEntity);
     }
 }
-
 
