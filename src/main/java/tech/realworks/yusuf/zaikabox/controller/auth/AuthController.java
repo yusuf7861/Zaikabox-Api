@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -29,6 +31,7 @@ import tech.realworks.yusuf.zaikabox.io.user.*;
 import tech.realworks.yusuf.zaikabox.repository.userRepo.UserRepository;
 import tech.realworks.yusuf.zaikabox.service.AuditService;
 import tech.realworks.yusuf.zaikabox.service.userservice.AppUserDetailsService;
+import tech.realworks.yusuf.zaikabox.service.userservice.RefreshTokenService;
 import tech.realworks.yusuf.zaikabox.service.userservice.UserService;
 import tech.realworks.yusuf.zaikabox.util.JwtUtil;
 
@@ -49,6 +52,7 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
     private final AuditService auditService;
+    private final RefreshTokenService refreshTokenService;
 
     @Operation(summary = "Register a new user", description = "Registers a new user account.")
     @ApiResponses(value = {
@@ -79,7 +83,7 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "Invalid credentials", content = @Content(schema = @Schema(implementation = ErrorsResponse.class)))
     })
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthenticationRequest authRequest){
+    public ResponseEntity<?> login(@Valid @RequestBody AuthenticationRequest authRequest){
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword()));
             final UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getEmail());
@@ -88,6 +92,7 @@ public class AuthController {
             String userId = userOpt.isPresent() ? userOpt.get().getId() : null;
 
             final String token = jwtUtil.generateToken(userDetails);
+            String refreshToken = refreshTokenService.issueToken(userId, authRequest.getEmail()).getToken();
             ResponseCookie cookie = ResponseCookie.from("jwt", token)
                     .httpOnly(true)
                     .secure(true)
@@ -95,15 +100,63 @@ public class AuthController {
                     .maxAge(Duration.ofDays(1))
                     .sameSite("none")
                     .build();
+            ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refreshToken)
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/")
+                    .maxAge(Duration.ofDays(7))
+                    .sameSite("none")
+                    .build();
 
             auditService.logLoginEvent(userId, authRequest.getEmail(), true, "User logged in successfully");
 
-            return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.SET_COOKIE, cookie.toString());
+            headers.add(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+
+            return ResponseEntity.ok()
+                    .headers(headers)
                     .body(new AuthenticationResponse(token, authRequest.getEmail()));
         } catch (AuthenticationException e) {
             auditService.logLoginEvent(null, authRequest.getEmail(), false, "Invalid credentials");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorsResponse("Invalid credentials", HttpStatus.UNAUTHORIZED));
         }
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@CookieValue(value = "refresh_token", required = false) String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ErrorsResponse("Missing refresh token", HttpStatus.UNAUTHORIZED));
+        }
+
+        var rotated = refreshTokenService.rotateToken(refreshToken);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(rotated.getEmail());
+        String accessToken = jwtUtil.generateToken(userDetails);
+
+        ResponseCookie accessCookie = ResponseCookie.from("jwt", accessToken)
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(Duration.ofDays(1))
+                .sameSite("none")
+                .build();
+
+        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", rotated.getToken())
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(Duration.ofDays(7))
+                .sameSite("none")
+                .build();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.SET_COOKIE, accessCookie.toString());
+        headers.add(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(new AuthenticationResponse(accessToken, rotated.getEmail()));
     }
 
     @Operation(summary = "Check authentication status", description = "Checks if the user is authenticated.")
@@ -124,7 +177,7 @@ public class AuthController {
     @Operation(summary = "Logout user", description = "Logs out the currently authenticated user.")
     @ApiResponse(responseCode = "200", description = "Logout successful")
     @PostMapping("/logout")
-    public ResponseEntity<?> logout() {
+    public ResponseEntity<?> logout(HttpServletRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication != null ? authentication.getName() : null;
 
@@ -135,8 +188,23 @@ public class AuthController {
         }
 
         SecurityContextHolder.clearContext();
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("refresh_token".equals(cookie.getName())) {
+                    refreshTokenService.revoke(cookie.getValue());
+                    break;
+                }
+            }
+        }
 
         ResponseCookie cookie = ResponseCookie.from("jwt", "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(0)
+                .sameSite("none")
+                .build();
+        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", "")
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
@@ -148,8 +216,12 @@ public class AuthController {
         response.put("message", "Logged out successfully");
         auditService.logLogoutEvent(userId, email);
 
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.SET_COOKIE, cookie.toString());
+        headers.add(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .headers(headers)
                 .body(response);
     }
 
@@ -159,7 +231,7 @@ public class AuthController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestBody SendResetOtpRequest request) {
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody SendResetOtpRequest request) {
         try {
             String token = userService.sendPasswordResetEmail(request.getEmail());
             Map<String, String> response = new HashMap<>();
@@ -177,7 +249,7 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Invalid OTP")
     })
     @PostMapping("/verify-otp")
-    public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
+    public ResponseEntity<?> verifyOtp(@Valid @RequestBody VerifyOtpRequest request) {
         try {
             boolean isValid = userService.verifyOtp(request.getToken(), request.getOtp());
             if (isValid) {

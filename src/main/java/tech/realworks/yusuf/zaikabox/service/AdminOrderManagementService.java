@@ -26,6 +26,7 @@ public class AdminOrderManagementService {
     private final OrderRepository orderRepository;
     private final UserService userService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final AuditService auditService;
 
     public static final String CUSTOMER_ORDER_STATUS_TOPIC = "/topic/orders";
 
@@ -73,6 +74,8 @@ public class AdminOrderManagementService {
 
         // Get current admin user ID
         String adminUserId = userService.findByUserId();
+        auditService.logEvent(adminUserId, null, "ADMIN_ORDER_STATUS_UPDATE",
+                "Order " + orderId + " updated from " + previousStatus + " to " + newStatus, true);
 
         // Broadcast status update to customer via WebSocket
         broadcastStatusUpdate(orderId, previousStatus, newStatus.name(), adminUserId);

@@ -1,6 +1,7 @@
 package tech.realworks.yusuf.zaikabox.config;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -14,6 +15,7 @@ import java.security.SecureRandom;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(value = "app.admin.initializer.enabled", havingValue = "true", matchIfMissing = true)
 public class AdminInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;

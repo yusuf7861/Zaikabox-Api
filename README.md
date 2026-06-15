@@ -2,6 +2,65 @@
 
 Zaikabox API is a comprehensive Spring Boot application that provides a backend service for food ordering platforms. Built using Java 17 and MongoDB, it implements a secure JWT-based authentication system and follows a clean architecture pattern.
 
+## Problem → Solution → Impact
+
+### Problem
+Modern food-ordering platforms need secure auth, reliable payment verification, real-time order updates, and admin observability—while staying easy to deploy and maintain.
+
+### Solution
+Zaikabox API implements:
+- JWT-based auth and role-based access control
+- Razorpay-backed order/payment flow with verification
+- Real-time order status notifications via WebSocket
+- Modular Spring Boot architecture with MongoDB persistence
+- Dockerized deployment and CI workflows
+
+### Impact
+- Demonstrates production-style backend engineering practices
+- Reduces feature-to-release friction with CI + containerization
+- Improves operational reliability through clear API contracts and workflow design
+
+## Getting Started (Local setup in ~5 minutes)
+
+### 1) Prerequisites
+- Java 17+
+- Maven 3.9+ (or use `./mvnw`)
+- Docker (recommended for local MongoDB)
+
+### 2) Clone and configure
+```bash
+git clone https://github.com/yusuf7861/Zaikabox-Api.git
+cd Zaikabox-Api
+cp .env.example .env
+```
+
+### 3) Start MongoDB quickly (Docker)
+```bash
+docker compose up -d mongo
+```
+
+### 4) Run the API
+```bash
+./mvnw spring-boot:run
+```
+
+### 5) Explore
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8080/api-docs`
+- Health endpoint: `http://localhost:8080/actuator/health`
+
+## Demo and Design Assets
+
+- Demo video: add your recorded walkthrough link here
+- Architecture diagram: `docs/architecture-diagram.png` (add your exported diagram file)
+- Postman collection: `postman/Zaikabox-Api.postman_collection.json`
+
+## Engineering Notes (Recruiter Friendly)
+
+- Engineering decisions: `docs/ENGINEERING_DECISIONS.md`
+- What I learned: `docs/WHAT_I_LEARNED.md`
+- System design and trade-offs: `docs/SYSTEM_DESIGN.md`
+
 ## Core Features
 
 
